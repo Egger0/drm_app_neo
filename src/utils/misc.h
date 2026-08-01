@@ -36,3 +36,9 @@ typedef enum {
 } parse_log_type_t;
 
 void parse_log_file(FILE* parse_log_f,const char *path, const char *message, parse_log_type_t type);
+
+// 素材/应用加载失败后补一份现场：目录列表(仿 ls -al) + 配置文件原文。
+// 用户拿到的日志里常常只有一句"解析失败"，看不出是文件名写错还是 JSON 少了括号。
+// cfg_name 可为 NULL(只列目录)。配置原文超过 PARSE_LOG_DUMP_MAX 截断。
+#define PARSE_LOG_DUMP_MAX 4096
+void parse_log_dump_context(FILE* parse_log_f, const char *dirpath, const char *cfg_name);

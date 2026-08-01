@@ -60,7 +60,7 @@
 #define PRTS_TIMER_MAX 1024
 #define PRTS_OPERATOR_PARSE_LOG "/root/asset.log"
 #define PRTS_ORDER_FILE "/root/epass_oporder.txt"
-#define PRTS_ASSET_VERSION_NUMBER 1
+#define PRTS_ASSET_VERSION_NUMBER 2
 #define PRTS_ASSET_CONFIG_FILENAME "epconfig.json"
 #define PRTS_ASSET_DIR "/assets/"
 #define PRTS_ASSET_DIR_SD SD_MOUNT_POINT "/assets/"

@@ -13,7 +13,16 @@
 #include <sys/stat.h>
 
 
+static int cfg_try_load_inner(apps_t *apps,app_entry_t* app,char * app_dir,app_source_t source,int index);
+
 int apps_cfg_try_load(apps_t *apps,app_entry_t* app,char * app_dir,app_source_t source,int index){
+    int ret = cfg_try_load_inner(apps, app, app_dir, source, index);
+    if (ret != 0 && app_dir && app_dir[0] != '\0')
+        parse_log_dump_context(apps->parse_log_f, app_dir, APPS_CONFIG_FILENAME);
+    return ret;
+}
+
+static int cfg_try_load_inner(apps_t *apps,app_entry_t* app,char * app_dir,app_source_t source,int index){
     if (!app || !app_dir) return -1;
 
     // 初始化条目

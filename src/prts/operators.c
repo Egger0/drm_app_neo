@@ -314,7 +314,16 @@ void prts_operator_entry_free(prts_operator_entry_t* operator) {
     overlay_opinfo_free_elements(&operator->opinfo_params);
 }
 
+static int operator_try_load_inner(prts_t *prts,prts_operator_entry_t* operator,char * path,prts_source_t source,int index);
+
 int prts_operator_try_load(prts_t *prts,prts_operator_entry_t* operator,char * path,prts_source_t source,int index){
+    int ret = operator_try_load_inner(prts, operator, path, source, index);
+    if (ret != 0 && path && path[0] != '\0')
+        parse_log_dump_context(prts->parse_log_f, path, PRTS_ASSET_CONFIG_FILENAME);
+    return ret;
+}
+
+static int operator_try_load_inner(prts_t *prts,prts_operator_entry_t* operator,char * path,prts_source_t source,int index){
     if (!path || strlen(path) == 0) {
         return -1;
     }
@@ -350,7 +359,7 @@ int prts_operator_try_load(prts_t *prts,prts_operator_entry_t* operator,char * p
 
     // ===== version =====
     cJSON *ver = cJSON_GetObjectItem(json, "version");
-    if (!ver || !cJSON_IsNumber(ver) || ver->valueint != PRTS_ASSET_VERSION_NUMBER) {
+    if (!ver || !cJSON_IsNumber(ver) || ver->valueint > PRTS_ASSET_VERSION_NUMBER) {
         parse_log_file(prts->parse_log_f, path, "version 校验失败", PARSE_LOG_ERROR);
         cJSON_Delete(json);
         return -1;

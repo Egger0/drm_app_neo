@@ -11,6 +11,8 @@
 #include <stdint.h>
 #include <sys/time.h>
 #include <time.h>
+#include <dirent.h>
+#include <errno.h>
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -309,5 +311,67 @@ void parse_log_file(FILE* parse_log_f,const char *path, const char *message, par
             fprintf(parse_log_f, "在处理%s时发生警告: %s\n", path, message);
             break;
     }
+    fflush(parse_log_f);
+}
+
+static void fmt_mode(mode_t m, char out[11])
+{
+    if (S_ISDIR(m))       out[0] = 'd';
+#ifdef S_ISLNK
+    else if (S_ISLNK(m))  out[0] = 'l';
+#endif
+    else                  out[0] = '-';
+    const char *rwx = "rwxrwxrwx";
+    for (int i = 0; i < 9; i++)
+        out[i + 1] = (m & (1u << (8 - i))) ? rwx[i] : '-';
+    out[10] = '\0';
+}
+
+void parse_log_dump_context(FILE* parse_log_f, const char *dirpath, const char *cfg_name)
+{
+    if (parse_log_f == NULL || dirpath == NULL) {
+        return;
+    }
+
+    fprintf(parse_log_f, "  ---- 目录 %s ----\n", dirpath);
+    DIR *d = opendir(dirpath);
+    if (!d) {
+        fprintf(parse_log_f, "  (无法打开目录: %s)\n", strerror(errno));
+    } else {
+        struct dirent *e;
+        while ((e = readdir(d)) != NULL) {
+            char full[512];
+            join_path(full, sizeof(full), dirpath, e->d_name);
+            struct stat st;
+            if (stat(full, &st) != 0) {
+                fprintf(parse_log_f, "  ?????????? %s (stat 失败: %s)\n", e->d_name, strerror(errno));
+                continue;
+            }
+            char mode[11];
+            fmt_mode(st.st_mode, mode);
+            fprintf(parse_log_f, "  %s %10lld %s\n",
+                    mode, (long long)st.st_size, e->d_name);
+        }
+        closedir(d);
+    }
+
+    if (cfg_name) {
+        char cfg_path[512];
+        join_path(cfg_path, sizeof(cfg_path), dirpath, cfg_name);
+        fprintf(parse_log_f, "  ---- %s ----\n", cfg_path);
+        size_t len = 0;
+        char *buf = read_file_all(cfg_path, &len);
+        if (!buf) {
+            fprintf(parse_log_f, "  (不存在或读取失败)\n");
+        } else {
+            size_t n = len > PARSE_LOG_DUMP_MAX ? PARSE_LOG_DUMP_MAX : len;
+            fwrite(buf, 1, n, parse_log_f);
+            if (buf[n - 1] != '\n') fputc('\n', parse_log_f);
+            if (n < len) fprintf(parse_log_f, "  ...(已截断，原文共 %lu 字节)\n", (unsigned long)len);
+            free(buf);
+        }
+    }
+
+    fprintf(parse_log_f, "  ---- 现场结束 ----\n\n");
     fflush(parse_log_f);
 }
