@@ -149,16 +149,20 @@ static void slot_focus_cb(lv_event_t *e)
     if (s->op_index < 0) return;
 
     // 焦点贴近顶/底且越界则滑窗 ±1，滑后保持焦点在同一干员。
+    // update_visible_range() 会重写所有槽的 op_index(含 s 自己)，故必须先把
+    // 当前干员存下来再滑窗——直接读 s->op_index 拿到的是滑窗后的新干员，
+    // 焦点会钉死在原槽位，一次按键推进两格。
+    int focus_op = s->op_index;
     if (slot_idx <= 1 && self.visible_start > 0) {
         self.scroll_guard = true;
         update_visible_range(self.visible_start - 1);
-        refocus_op(s->op_index);
+        refocus_op(focus_op);
         self.scroll_guard = false;
     } else if (slot_idx >= UI_OPLIST_VISIBLE_SLOTS - 2 &&
                self.visible_start + UI_OPLIST_VISIBLE_SLOTS < self.total) {
         self.scroll_guard = true;
         update_visible_range(self.visible_start + 1);
-        refocus_op(s->op_index);
+        refocus_op(focus_op);
         self.scroll_guard = false;
     }
 

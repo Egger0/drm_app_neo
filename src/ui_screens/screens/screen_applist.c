@@ -56,16 +56,19 @@ static void slot_focus_cb(lv_event_t *e)
     int slot_idx = (int)(s - self.slots);
     if (s->app_index < 0) return;
 
+    // 先存后滑：update_visible_range() 会重写 s->app_index，滑窗后再读就成了
+    // 新 app，焦点钉死在原槽位、一次按键推进两格。同 screen_oplist。
+    int focus_app = s->app_index;
     if (slot_idx <= 1 && self.visible_start > 0) {
         self.scroll_guard = true;
         update_visible_range(self.visible_start - 1);
-        refocus_app(s->app_index);
+        refocus_app(focus_app);
         self.scroll_guard = false;
     } else if (slot_idx >= UI_APP_VISIBLE_SLOTS - 2 &&
                self.visible_start + UI_APP_VISIBLE_SLOTS < self.total) {
         self.scroll_guard = true;
         update_visible_range(self.visible_start + 1);
-        refocus_app(s->app_index);
+        refocus_app(focus_app);
         self.scroll_guard = false;
     }
 
