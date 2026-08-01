@@ -9,6 +9,7 @@
 #include "ui_screens/screen_manager.h"
 #include "ui_screens/screens/screen_warning.h"
 #include "ui_screens/screens/screen_confirm.h"
+#include "ui/uix_session.h"
 
 #include <lvgl/lvgl.h>
 #include "config.h"
@@ -76,6 +77,7 @@ static const char *warn_title(warning_type_t t)
         case UI_WARNING_APP_NO_DIRECT_START:  return "APP不支持直接启动";
         case UI_WARNING_APP_LOAD_ERROR:       return "部分APP加载失败";
         case UI_WARNING_APP_ALREADY_RUNNING:  return "APP已经在后台运行";
+        case UI_WARNING_VIDEO_DECODE_ERROR:   return "素材解码失败";
         default:                              return "未知错误";
     }
 }
@@ -91,6 +93,7 @@ static const char *warn_desc(warning_type_t t)
         case UI_WARNING_APP_NO_DIRECT_START:  return "请通过文件管理器选择此APP支持的文件";
         case UI_WARNING_APP_LOAD_ERROR:       return "请根据日志检查APP配置文件是否正确";
         case UI_WARNING_APP_ALREADY_RUNNING:  return "此APP已在后台运行，可在应用列表界面关闭。";
+        case UI_WARNING_VIDEO_DECODE_ERROR:   return "视频格式不受支持或文件已损坏。";
         default:                              return "为什么你能看到这个告警页面？";
     }
 }
@@ -106,6 +109,7 @@ static const char *warn_icon(warning_type_t t)
         case UI_WARNING_APP_NO_DIRECT_START:  return UI_ICON_TRIANGLE_EXCLAMATION;
         case UI_WARNING_APP_LOAD_ERROR:       return UI_ICON_TRIANGLE_EXCLAMATION;
         case UI_WARNING_APP_ALREADY_RUNNING:  return UI_ICON_CAR_BURST;
+        case UI_WARNING_VIDEO_DECODE_ERROR:   return UI_ICON_TRIANGLE_EXCLAMATION;
         default:                              return UI_ICON_QUESTION;
     }
 }
@@ -114,7 +118,8 @@ static uint32_t warn_color(warning_type_t t)
     switch (t) {
         case UI_WARNING_LOW_BATTERY:
         case UI_WARNING_SD_MOUNT_ERROR:
-        case UI_WARNING_NOT_IMPLEMENTED:      return UI_COLOR_ERROR;
+        case UI_WARNING_NOT_IMPLEMENTED:
+        case UI_WARNING_VIDEO_DECODE_ERROR:   return UI_COLOR_ERROR;
         case UI_WARNING_ASSET_ERROR:
         case UI_WARNING_PRTS_CONFLICT:
         case UI_WARNING_NO_ASSETS:
@@ -125,21 +130,58 @@ static uint32_t warn_color(warning_type_t t)
     }
 }
 
+// 有对应解析日志的告警：装了能开 ".log" 的 APP 时，直接问用户要不要看日志。
+static const char *warn_log_path(warning_type_t t)
+{
+    switch (t) {
+        case UI_WARNING_ASSET_ERROR:    return PRTS_OPERATOR_PARSE_LOG;
+        case UI_WARNING_APP_LOAD_ERROR: return APPS_PARSE_LOG;
+        default:                        return NULL;
+    }
+}
+
+// ================= 模态占用判定 =================
+// 告警只是"通知"，确认/USB选择是"要用户答复"。后者在场时告警必须排队等着，
+// 否则会把等答复的弹窗冲掉：UIX 会话会一直挂到超时，本地二次确认的回调直接丢。
+static bool modal_busy(void)
+{
+    screen_id_t cur = screens_current();
+    if (cur == SCREEN_CONFIRM || cur == SCREEN_USBSELECT) return true;
+    // 弹屏请求已发出但 ipc_helper 的 timer 还没跑到，此刻屏还是旧的
+    return uix_session_pending();
+}
+
 // ================= 告警队列 =================
 typedef struct {
     char    *title, *desc, *icon;
     uint32_t color;
     bool     on_heap;
+    const char *log_path;   // 非 NULL 且有关联 APP 时改走 confirm
 } warn_info_t;
 
+static spsc_bq_t   s_confirm_q;   // 定义在前:告警要看它排没排队
 static spsc_bq_t   s_warn_q;
 static lv_timer_t *s_warn_timer;
 static uint32_t    s_warn_last_tick;
 static bool        s_inited;
 
+// prts/apps 的首次扫描在 main 里,早于 ui_services_init(LVGL 起来才建队列),
+// 开机就报错的告警会全丢。先记下来,init 时补投。此时只有 main 线程在跑,不用加锁。
+#define WARN_PENDING_MAX 4
+static warning_type_t s_pending_warn[WARN_PENDING_MAX];
+static int            s_pending_warn_count;
+
 void ui_warning(warning_type_t type)
 {
-    if (!s_inited) { log_warn("ui_warning before init, dropped (type=%d)", type); return; }
+    if (!s_inited) {
+        for (int i = 0; i < s_pending_warn_count; i++)
+            if (s_pending_warn[i] == type) return;
+        if (s_pending_warn_count < WARN_PENDING_MAX)
+            s_pending_warn[s_pending_warn_count++] = type;
+        else
+            log_warn("ui_warning before init, dropped (type=%d)", type);
+        return;
+    }
     warn_info_t *info = calloc(1, sizeof(*info));
     if (!info) return;
     info->title   = (char *)warn_title(type);
@@ -147,6 +189,7 @@ void ui_warning(warning_type_t type)
     info->icon    = (char *)warn_icon(type);
     info->color   = warn_color(type);
     info->on_heap = false;
+    info->log_path = warn_log_path(type);
     spsc_bq_push(&s_warn_q, info);
 }
 
@@ -163,20 +206,31 @@ void ui_warning_custom(char *title, char *desc, char *icon, uint32_t color)
     spsc_bq_push(&s_warn_q, info);
 }
 
+// confirm 的回调没有参数，待打开的日志只能先存下来
+static char s_pending_log[128];
+static void proceed_open_log(void) { ui_backend_open_log(s_pending_log); }
+
 static void warn_timer_cb(lv_timer_t *t)
 {
     (void)t;
+    if (modal_busy()) return;
+    // 确认已排队但还没弹出来:让它先弹,否则告警插队后又会被确认盖掉
+    if (spsc_bq_count(&s_confirm_q) > 0) return;
     if (lv_tick_get() - s_warn_last_tick < UI_WARNING_DISPLAY_DURATION / 1000) return;
     warn_info_t *info;
     if (spsc_bq_try_pop(&s_warn_q, (void **)&info) != 0) return;
-    screen_warning_show(info->icon, info->title, info->desc, info->color);
+    if (info->log_path && ui_backend_log_viewer_available()) {
+        lv_strlcpy(s_pending_log, info->log_path, sizeof(s_pending_log));
+        screen_confirm_show2(info->title, "是否打开日志查看？", proceed_open_log, NULL);
+    } else {
+        screen_warning_show(info->icon, info->title, info->desc, info->color);
+    }
     if (info->on_heap) { free(info->title); free(info->desc); free(info->icon); }
     free(info);
     s_warn_last_tick = lv_tick_get();
 }
 
 // ================= 确认队列 =================
-static spsc_bq_t   s_confirm_q;
 static lv_timer_t *s_confirm_timer;
 
 static void proceed_format_sd(void) { ui_hook_format_sd(); }
@@ -191,6 +245,7 @@ void ui_confirm(ui_confirm_type_t type)
 static void confirm_timer_cb(lv_timer_t *t)
 {
     (void)t;
+    if (modal_busy()) return;
     void *raw;
     if (spsc_bq_try_pop(&s_confirm_q, &raw) != 0) return;
     ui_confirm_type_t type = (ui_confirm_type_t)(intptr_t)raw;
@@ -233,6 +288,11 @@ void ui_services_init(void)
     s_warn_last_tick = lv_tick_get();
     s_inited = true;
     log_info("==> ui_services initialized");
+
+    int pending = s_pending_warn_count;
+    s_pending_warn_count = 0;
+    for (int i = 0; i < pending; i++)
+        ui_warning(s_pending_warn[i]);
 }
 void ui_services_destroy(void)
 {

@@ -248,6 +248,7 @@ inline static int handle_mediaplayer_set_video_path(ipc_req_t *req, ipc_resp_t *
     int ret = mediaplayer_play_video(&g_mediaplayer, req->mediaplayer_video_path.path);
     if(ret != 0){
         log_error("handle_mediaplayer_set_video_path: mediaplayer_play_video failed");
+        ui_warning(UI_WARNING_VIDEO_DECODE_ERROR);
         resp->type = IPC_RESP_ERROR_INVALID_REQUEST;
         return sizeof(ipc_resp_type_t);
     }
@@ -280,7 +281,10 @@ static void overlay_transition_middle_cb_video(void* userdata, bool is_last){
         return;
     }
     mediaplayer_stop(&g_mediaplayer);
-    mediaplayer_play_video(&g_mediaplayer, data->video_path);
+    if(mediaplayer_play_video(&g_mediaplayer, data->video_path) != 0){
+        log_error("overlay_transition_middle_cb_video: play_video failed: %s", data->video_path);
+        ui_warning(UI_WARNING_VIDEO_DECODE_ERROR);
+    }
 }
 
 // end_cb: 释放图片资源和其他资源

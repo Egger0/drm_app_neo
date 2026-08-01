@@ -27,6 +27,7 @@ typedef enum {
     UI_WARNING_APP_NO_DIRECT_START = 7,
     UI_WARNING_APP_LOAD_ERROR = 8,
     UI_WARNING_APP_ALREADY_RUNNING = 9,
+    UI_WARNING_VIDEO_DECODE_ERROR = 10,
 } warning_type_t;
 
 void ui_warning(warning_type_t type);

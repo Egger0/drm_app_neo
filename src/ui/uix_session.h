@@ -26,6 +26,9 @@ uint32_t uix_session_usb_select_start(const ipc_req_uix_usb_select_start_data_t 
 bool uix_session_poll(uint32_t id, uint32_t *state, uint32_t *choice);
 bool uix_session_cancel(uint32_t id);
 
+// 任意线程：是否有正在等用户操作的会话（含弹屏请求还在 IPC 队列里的窗口期）。
+bool uix_session_pending(void);
+
 // LVGL 线程：弹屏时读取当前会话参数（返回当前 kind；无会话 UIX_KIND_NONE）。
 uix_kind_t uix_session_snapshot(uint32_t *id, char *title, size_t title_cap,
                                 char *desc, size_t desc_cap, uint32_t *func_mask);

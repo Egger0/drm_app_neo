@@ -101,7 +101,7 @@ void overlay_worker_schedule(overlay_t* overlay,void (*func)(void *userdata,int 
         pthread_cond_signal(&worker->cond);
     }
     else{
-        log_warn("overlay worker can't keep up... dropping task");
+        log_debug("overlay worker can't keep up... dropping task");
         worker->skipped_frames++;
     }
     pthread_mutex_unlock(&worker->mutex);

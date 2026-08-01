@@ -12,6 +12,7 @@
 #include "prts/prts.h"
 #include "apps/apps.h"
 #include "apps/apps_types.h"
+#include "apps/extmap.h"
 #include "utils/settings.h"
 #include "utils/log.h"
 #include "utils/misc.h"
@@ -427,4 +428,29 @@ void ui_backend_applist_select(int idx)
             log_error("applist_select: unknown app type %d", a->type);
             break;
     }
+}
+
+// ================= 日志查看 =================
+bool ui_backend_log_viewer_available(void)
+{
+    if (!s_apps) return false;
+    app_entry_t *app = NULL;
+    return apps_extmap_get(&s_apps->extmap, ".log", &app) == 0 && app != NULL;
+}
+
+void ui_backend_open_log(const char *abs_path)
+{
+    if (!s_apps || !abs_path) return;
+    const char *base = path_basename(abs_path);
+    if (!base || base == abs_path) { log_error("open_log: not an absolute path: %s", abs_path); return; }
+
+    char dir[128];
+    size_t dirlen = (size_t)(base - abs_path) - 1;   // 去掉分隔符本身
+    if (dirlen == 0) dirlen = 1;                     // "/x.log" -> "/"
+    if (dirlen >= sizeof(dir)) { log_error("open_log: path too long: %s", abs_path); return; }
+    memcpy(dir, abs_path, dirlen);
+    dir[dirlen] = '\0';
+
+    if (apps_try_launch_by_file(s_apps, dir, base) != 0)
+        log_error("open_log: failed to launch viewer for %s", abs_path);
 }

@@ -90,7 +90,10 @@ static void set_video_cb(void* userdata,bool is_last){
     log_trace("set_video_cb");
     prts_video_t* data = (prts_video_t*)userdata;
     mediaplayer_stop(&g_mediaplayer);
-    mediaplayer_play_video(&g_mediaplayer, data->path);
+    if(mediaplayer_play_video(&g_mediaplayer, data->path) != 0){
+        log_error("play_video failed: %s", data->path);
+        ui_warning(UI_WARNING_VIDEO_DECODE_ERROR);
+    }
 }
 
 extern void mount_video_layer_callback(void *userdata,bool is_last);
@@ -98,7 +101,11 @@ static void set_video_mount_layer_cb(void* userdata,bool is_last){
     log_trace("set_video_mount_layer_cb");
     prts_video_t* data = (prts_video_t*)userdata;
     mediaplayer_stop(&g_mediaplayer);
-    mediaplayer_play_video(&g_mediaplayer, data->path);
+    // 失败也要照常挂层：mount 是过渡编排的一环，跳过会让 overlay 卡在中段
+    if(mediaplayer_play_video(&g_mediaplayer, data->path) != 0){
+        log_error("play_video failed: %s", data->path);
+        ui_warning(UI_WARNING_VIDEO_DECODE_ERROR);
+    }
 
     mount_video_layer_callback(userdata, is_last);
 }
@@ -420,6 +427,8 @@ static void switch_operator(prts_t* prts,int target_index){
 
     log_info("switching operator from %s to %s", curr_operator->operator_name, target_operator->operator_name);
 
+    atomic_store(&prts->decode_error_warned, 0);
+
     // 卸载当前干员。此时overlay播放消失动画，但是mediaplayer还在运行。
     if(!is_first_switch){
         overlay_abort(prts->overlay);
@@ -707,11 +716,22 @@ static void prts_tick_cb(void* userdata,bool is_last){
     if(!atomic_load(&prts->suspended) && prts->state == PRTS_STATE_IDLE
        && mediaplayer_source_lost(&g_mediaplayer)){
         log_warn("prts: media source lost, suspend until asset reload");
+        ui_warning(UI_WARNING_SD_MOUNT_ERROR);
         mediaplayer_stop(&g_mediaplayer);
         atomic_store(&prts->suspended, 1);
     }
     if(atomic_load(&prts->suspended))
         return;
+
+    // 解码线程中途死掉:线程已自行退出,running 仍为 1,画面停在残帧。只提示,
+    // 不动播放状态机——下一次自动/请求切换的 stop+play 照常收拾。判定已排除
+    // SOURCE_LOST,故与上面那段互斥。
+    if(!atomic_load(&prts->decode_error_warned) && prts->state == PRTS_STATE_IDLE
+       && mediaplayer_decode_error(&g_mediaplayer)){
+        log_warn("prts: decode error, video stopped");
+        ui_warning(UI_WARNING_VIDEO_DECODE_ERROR);
+        atomic_store(&prts->decode_error_warned, 1);
+    }
 
     settings_lock(&g_settings);
     bool interval_sw = should_switch_by_interval(prts);
@@ -799,6 +819,7 @@ void prts_init(prts_t* prts, overlay_t* overlay){
 
     atomic_store(&prts->is_auto_switch_blocked, 0);
     atomic_store(&prts->suspended, 0);
+    atomic_store(&prts->decode_error_warned, 0);
 
     spsc_bq_init(&prts->req_queue, 10);
 

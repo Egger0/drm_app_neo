@@ -87,6 +87,12 @@ void ui_backend_applist_select(int idx);
 // 从磁盘重扫应用列表。必须在 LVGL 线程调用(列表由本线程读取)。
 void ui_backend_reload_applist(void);
 
+// ---- 日志查看 ----
+// 是否有 APP 关联了 ".log"，有才值得问用户"要不要看日志"。
+bool ui_backend_log_viewer_available(void);
+// 用关联 APP 打开日志文件 (绝对路径)。
+void ui_backend_open_log(const char *abs_path);
+
 // ---- 扩列图按键导航 (←/→ 翻页) ----
 void ui_backend_displayimg_key(uint32_t key);
 

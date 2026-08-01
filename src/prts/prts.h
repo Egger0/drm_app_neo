@@ -95,6 +95,10 @@ typedef struct {
     // 片源丢失(SD 拔出致 mediaplayer 停播)后挂起:停自动/请求切换,
     // 等 mdev 触发 RELOAD_ASSETS 重开
     atomic_int suspended;
+
+    // 解码失败告警去重:DECODER_ERROR 位会一直留到下一次 play,不去重则每个
+    // tick 弹一次。切干员时清零,让下一个坏素材还能弹。
+    atomic_int decode_error_warned;
 } prts_t;
 
 void prts_init(prts_t* prts,overlay_t* overlay);

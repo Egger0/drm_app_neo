@@ -95,6 +95,13 @@ bool uix_session_cancel(uint32_t id) {
     return found;
 }
 
+bool uix_session_pending(void) {
+    pthread_mutex_lock(&S.mtx);
+    bool pending = (S.kind != UIX_KIND_NONE && S.state == UIX_PENDING);
+    pthread_mutex_unlock(&S.mtx);
+    return pending;
+}
+
 uix_kind_t uix_session_snapshot(uint32_t *id, char *title, size_t title_cap,
                                 char *desc, size_t desc_cap, uint32_t *func_mask) {
     pthread_mutex_lock(&S.mtx);
