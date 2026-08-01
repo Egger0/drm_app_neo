@@ -85,6 +85,10 @@ mp_status_t mediaplayer_get_status(mediaplayer_t *mediaplayer);
    供 prts 区分"素材消失"以挂起等待 reload。新 play 会清除该状态。 */
 bool mediaplayer_source_lost(mediaplayer_t *mediaplayer);
 
+/* 上一次播放是否因解码失败而停止。片源丢失(SOURCE_LOST)会同时置 DECODER_ERROR,
+   这里已排除,故与 mediaplayer_source_lost() 互斥。新 play 会清除该状态。 */
+bool mediaplayer_decode_error(mediaplayer_t *mediaplayer);
+
 /* 按当前视频尺寸刷新 video 层几何记录(幂等，plane 实际状态由下一个 FLIP 决定)。
    供过渡 middle_cb 在画面被遮盖的时机调用 */
 int mediaplayer_remount_video_layer(mediaplayer_t *mediaplayer);

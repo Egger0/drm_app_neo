@@ -216,7 +216,9 @@ static void *mp_decode_thread(void *param)
         if (now < next_frame_time)
             usleep(next_frame_time - now);
         else if (now > next_frame_time + 2 * 1000 * 1000) {
+#ifdef MP_TIMING_DEBUG
             log_warn("can't keep up, delay: %lld us", now - next_frame_time);
+#endif
             next_frame_time = now;
         }
 
@@ -224,9 +226,13 @@ static void *mp_decode_thread(void *param)
         p->slot_busy[slot] = true;
         mp_enqueue_frame(mp, p->pool[slot].fb_id, slot);
         next_frame_time += mp->frame_duration_us;
+#ifdef MP_TIMING_DEBUG
         if (++outputs % 300 == 0)
             log_info("mp pace: out=%u lag=%lldms", outputs,
                      (long long)(int64_t)(mp_get_now_us() - next_frame_time) / 1000);
+#else
+        (void)outputs;
+#endif
     }
 
     pthread_rwlock_wrlock(&mp->thread.rwlock);
@@ -318,6 +324,12 @@ static int mp_prepare_and_spawn(mediaplayer_t *mp)
     AVStream *st;
     AVRational fr;
 
+    /* 先清上一会话的错误位，理由同设备后端(失败路径不会走到下面的启动段) */
+    pthread_rwlock_wrlock(&mp->thread.rwlock);
+    mp->thread.state = 0;
+    mp->thread.requested_stop = 0;
+    pthread_rwlock_unlock(&mp->thread.rwlock);
+
     if (avformat_open_input(&p->fmt, mp->input_path, NULL, NULL) < 0) {
         log_error("avformat_open_input err: %s", mp->input_path);
         return -1;
@@ -383,11 +395,6 @@ static int mp_prepare_and_spawn(mediaplayer_t *mp)
              mp->input_path, mp->frame_width, mp->frame_height,
              mp->display_width, mp->display_height,
              mp->frame_duration_us, codec->name);
-
-    pthread_rwlock_wrlock(&mp->thread.rwlock);
-    mp->thread.state = 0;
-    mp->thread.requested_stop = 0;
-    pthread_rwlock_unlock(&mp->thread.rwlock);
 
     atomic_store(&mp->running, 1);
 
@@ -524,4 +531,16 @@ bool mediaplayer_source_lost(mediaplayer_t *mp)
     lost = (mp->thread.state & MEDIAPLAYER_SOURCE_LOST) != 0;
     pthread_rwlock_unlock(&mp->thread.rwlock);
     return lost;
+}
+
+bool mediaplayer_decode_error(mediaplayer_t *mp)
+{
+    int state;
+    if (!mp)
+        return false;
+    pthread_rwlock_rdlock(&mp->thread.rwlock);
+    state = mp->thread.state;
+    pthread_rwlock_unlock(&mp->thread.rwlock);
+    return (state & MEDIAPLAYER_DECODER_ERROR) &&
+           !(state & MEDIAPLAYER_SOURCE_LOST);
 }

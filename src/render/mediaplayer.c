@@ -352,12 +352,16 @@ static void *mp_pacer_thread(void *param)
 
         drm_warpper_enqueue_display_item(mp->drm_warpper,
                                          DRM_WARPPER_LAYER_VIDEO, item);
+#ifdef MP_TIMING_DEBUG
         // 节拍诊断：定速落后量(正=落后) + ring 存量。存量长期见底 = VE 吞吐
         // 追不上素材帧率，储备只当了通道用，加深 buffer 也救不了(得降帧率)
         if (!draining && ++outputs % 300 == 0)
             log_info("mp pace: out=%u lag=%lldms ring=%u/%u", outputs,
                      (long long)(mp_get_now_us() - next_frame_time) / 1000,
                      (unsigned int)spsc_bq_count(&p->smooth_q), p->smooth_bufs);
+#else
+        (void)outputs;
+#endif
     }
 
     log_info("==> mp_pacer Thread Ended!");
@@ -427,7 +431,9 @@ static int mp_decode_au(mediaplayer_t *mp, unsigned int sample_idx,
         return -1;
     }
 
+#ifdef MP_TIMING_DEBUG
     long long t0 = mp_get_now_us(), t1, t2;
+#endif
 
     /* 无空槽 = 在飞帧太多，等显示线程回流(每 vblank 一次) */
     for (retry = 0; retry < 100; retry++) {
@@ -443,7 +449,9 @@ static int mp_decode_au(mediaplayer_t *mp, unsigned int sample_idx,
     }
     if (mp_trace_on())
         log_info("T D%d @%u", slot, sample_idx);
+#ifdef MP_TIMING_DEBUG
     t1 = mp_get_now_us();
+#endif
 
     if (vdec_decode(&p->vdec, slot, ts, vcl.data, vcl.size, &ctrl) < 0) {
         log_error("decode failed @%u", sample_idx);
@@ -452,10 +460,12 @@ static int mp_decode_au(mediaplayer_t *mp, unsigned int sample_idx,
     }
 
     h264_dpb_end_frame(&p->dpb, hdr_out);
+#ifdef MP_TIMING_DEBUG
     t2 = mp_get_now_us();
     if (t2 - t0 > mp_slow_threshold_us(mp))
         log_warn("slow @%u: slot_wait=%lldus ve=%lldus size=%u",
                  sample_idx, t1 - t0, t2 - t1, vcl.size);
+#endif
     return 0;
 }
 
@@ -525,12 +535,16 @@ static void *mp_decode_thread(void *param)
                     break; /* 本档期先出旧帧，sample 不前进 */
             }
 
+#ifdef MP_TIMING_DEBUG
             long long d0 = mp_get_now_us();
+#endif
             rc = mp_decode_au(mp, sample_idx, &hdr);
+#ifdef MP_TIMING_DEBUG
             long long decode_us = mp_get_now_us() - d0;
             if (decode_us > mp_slow_threshold_us(mp))
                 log_warn("slow decode_au %lldus @%u",
                          decode_us, sample_idx);
+#endif
             if (rc == MP_DECODE_SOURCE_LOST)
                 goto source_lost;
             if (rc < 0)
@@ -709,6 +723,14 @@ static int mp_prepare_and_spawn(mediaplayer_t *mp)
     unsigned int cap_count, max_ref, reorder, max_frame_num;
     unsigned int i;
 
+    /* 先清上一会话的错误位:失败路径直接 return -1 不会走到下面,残留的
+     * DECODER_ERROR 会被 prts 轮询当成本次的异步失败重复上报。此刻旧解码
+     * 线程已在 mediaplayer_stop() 里 join 完,无并发写。 */
+    pthread_rwlock_wrlock(&mp->thread.rwlock);
+    mp->thread.state = 0;
+    mp->thread.requested_stop = 0;
+    pthread_rwlock_unlock(&mp->thread.rwlock);
+
     if (mp4_open(&p->demux, mp->input_path) < 0) {
         log_error("mp4_open err: %s", mp->input_path);
         return -1;
@@ -873,11 +895,6 @@ static int mp_prepare_and_spawn(mediaplayer_t *mp)
              mp->frame_width, mp->frame_height,
              mp->display_width, mp->display_height, max_ref, cap_count,
              p->smooth_bufs, p->yflip, p->flip_count, mp->frame_duration_us);
-
-    pthread_rwlock_wrlock(&mp->thread.rwlock);
-    mp->thread.state = 0;
-    mp->thread.requested_stop = 0;
-    pthread_rwlock_unlock(&mp->thread.rwlock);
 
     atomic_store(&mp->running, 1);
 
@@ -1044,4 +1061,16 @@ bool mediaplayer_source_lost(mediaplayer_t *mp)
     lost = (mp->thread.state & MEDIAPLAYER_SOURCE_LOST) != 0;
     pthread_rwlock_unlock(&mp->thread.rwlock);
     return lost;
+}
+
+bool mediaplayer_decode_error(mediaplayer_t *mp)
+{
+    int state;
+    if (!mp)
+        return false;
+    pthread_rwlock_rdlock(&mp->thread.rwlock);
+    state = mp->thread.state;
+    pthread_rwlock_unlock(&mp->thread.rwlock);
+    return (state & MEDIAPLAYER_DECODER_ERROR) &&
+           !(state & MEDIAPLAYER_SOURCE_LOST);
 }

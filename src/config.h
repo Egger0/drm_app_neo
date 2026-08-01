@@ -255,6 +255,10 @@
 #define C8PAL_COLOR_RAMP_LEVELS  8   // custom 元素色的迷你 ramp(1 opaque + 8 alpha)
 #define C8PAL_COLOR_RAMPS_MAX    4   // 池里最多几个元素色带 ramp,超出只写 opaque
 
+// 解码计时(t0/t1/t2、慢帧告警、pacer 节拍日志)编译期开关；关闭时连
+// clock_gettime 调用一起编译掉，量产默认关。排查掉帧/卡顿时打开。
+// #define MP_TIMING_DEBUG
+
 // ========== Media Player (V4L2 stateless / cedrus) ==========
 // OUTPUT(码流)buffer 大小：一帧一个 NAL，打开时按 mp4 最大 sample 校验
 #define VDEC_OUTPUT_BUF_SIZE (512 * 1024)
