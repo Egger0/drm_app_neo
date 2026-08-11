@@ -62,12 +62,25 @@ void* overlay_worker_thread(void* arg){
     while(atomic_load(&worker->running)){
         pthread_mutex_lock(&worker->mutex);
 
+#ifdef _WIN32
+        // Windows: 1ms 轮询替代 pthread_cond_wait（winpthreads 下信号不可靠）
+        while(!worker->pending && atomic_load(&worker->running)){
+            pthread_mutex_unlock(&worker->mutex);
+            usleep(1000);
+            pthread_mutex_lock(&worker->mutex);
+        }
+        if(!atomic_load(&worker->running)){
+            pthread_mutex_unlock(&worker->mutex);
+            goto worker_end;
+        }
+#else
         while(!worker->pending){
             pthread_cond_wait(&worker->cond, &worker->mutex);
             if(!atomic_load(&worker->running)){
                 goto worker_end;
             }
         }
+#endif
 
         worker->pending = 0;
         worker->in_progress = 1;
@@ -98,7 +111,9 @@ void overlay_worker_schedule(overlay_t* overlay,void (*func)(void *userdata,int 
         worker->pending = 1;
         worker->func = func;
         worker->userdata = userdata;
+#ifndef _WIN32
         pthread_cond_signal(&worker->cond);
+#endif
     }
     else{
         log_debug("overlay worker can't keep up... dropping task");
@@ -166,8 +181,16 @@ void overlay_abort(overlay_t* overlay){
     );
 
     overlay->request_abort = 1;
+#ifdef _WIN32
+    // WT_EXECUTELONGFUNCTION 保证 worker 线程独立不被本 spin-loop 饿死
+    // 缩短 sleep 加速响应
+    #define ABORT_SLEEP_US (5 * 1000)
+#else
+    #define ABORT_SLEEP_US (50 * 1000)
+#endif
     while(overlay->overlay_timer_handle){
-        usleep(50 * 1000);
+        usleep(ABORT_SLEEP_US);
     }
+#undef ABORT_SLEEP_US
     return;
 }
