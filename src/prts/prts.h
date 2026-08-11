@@ -69,6 +69,7 @@ typedef enum {
     PRTS_STATE_INTRO, //入场视频
     PRTS_STATE_TRANSITION_LOOP, // 循环过渡
     PRTS_STATE_PRE_OPINFO, // 显示干员信息前的等待
+    PRTS_STATE_BOOT_ANIM, // 开机动画（首次干员切换前）
 } prts_state_t;
 
 typedef struct {
@@ -110,6 +111,10 @@ int prts_operators_reserve(prts_t* prts, int need);
 
 void prts_request_set_operator(prts_t* prts,int operator_index);
 void prts_request_reload_assets(prts_t* prts);
+
+// 开机动画：首次干员切换前播放 /assets|/sd/assets/boot.mp4，可按键跳过
+bool prts_boot_anim_active(prts_t* prts);
+void prts_boot_anim_skip(prts_t* prts);
 
 // 把 from 处干员移动到 to 处(仅改内存)。由 UI 线程在干员列表排序时直接调用。
 void prts_move_operator(prts_t* prts, int from, int to);

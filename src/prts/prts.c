@@ -810,6 +810,83 @@ int prts_operators_reserve(prts_t* prts, int need){
     return 0;
 }
 
+// ============ Boot animation ============
+// Played before the first operator switch; ends by timer or is skipped by key
+// (the LVGL key callback calls prts_boot_anim_skip()).
+static prts_timer_handle_t s_boot_anim_timer;
+static bool s_boot_anim_timer_active;
+
+static void prts_boot_anim_finish(prts_t* prts){
+    if(prts->state != PRTS_STATE_BOOT_ANIM){
+        return;
+    }
+    log_info("boot animation end, switching to first operator");
+    // Leave the state first, so a concurrent timer callback / key press
+    // cannot enter this path twice.
+    prts->state = PRTS_STATE_IDLE;
+    if(s_boot_anim_timer_active){
+        s_boot_anim_timer_active = false;
+        prts_timer_cancel(s_boot_anim_timer);
+    }
+    mediaplayer_stop(&g_mediaplayer);
+    switch_operator(prts, 0);
+}
+
+static void prts_boot_anim_timer_cb(void* userdata, bool is_last){
+    prts_t* prts = (prts_t*)userdata;
+    s_boot_anim_timer_active = false;
+    prts_boot_anim_finish(prts);
+}
+
+bool prts_boot_anim_active(prts_t* prts){
+    return prts->state == PRTS_STATE_BOOT_ANIM;
+}
+
+void prts_boot_anim_skip(prts_t* prts){
+    if(prts->state != PRTS_STATE_BOOT_ANIM){
+        return;
+    }
+    log_info("boot animation skipped by key");
+    prts_boot_anim_finish(prts);
+}
+
+static bool prts_boot_anim_find_video(char* out, size_t outsz){
+    // SD card assets first, then system /assets.
+    snprintf(out, outsz, "%s%s", PRTS_ASSET_DIR_SD, PRTS_BOOT_ANIM_FILE);
+    if(file_exists_readable(out)){
+        return true;
+    }
+    snprintf(out, outsz, "%s%s", PRTS_ASSET_DIR, PRTS_BOOT_ANIM_FILE);
+    if(file_exists_readable(out)){
+        return true;
+    }
+    return false;
+}
+
+static void prts_start_boot_anim(prts_t* prts){
+    char path[256];
+    if(!prts_boot_anim_find_video(path, sizeof(path))){
+        log_info("boot animation: no %s found, direct first switch", PRTS_BOOT_ANIM_FILE);
+        prts->state = PRTS_STATE_IDLE;
+        switch_operator(prts, 0);
+        return;
+    }
+
+    log_info("boot animation: playing %s (%d ms)", path, PRTS_BOOT_ANIM_DURATION_MS);
+    prts->state = PRTS_STATE_BOOT_ANIM;
+    prts->last_switch_time = get_now_us(); // keep tick from auto-switching during the animation
+    mediaplayer_play_video(&g_mediaplayer, path);
+    prts_timer_create(
+        &s_boot_anim_timer,
+        (uint64_t)PRTS_BOOT_ANIM_DURATION_MS * 1000,
+        0,
+        1,
+        prts_boot_anim_timer_cb,
+        prts
+    );
+    s_boot_anim_timer_active = true;
+}
+
 void prts_init(prts_t* prts, overlay_t* overlay){
     log_info("==> PRTS Initializing...");
     prts->overlay = overlay;
@@ -827,9 +904,8 @@ void prts_init(prts_t* prts, overlay_t* overlay){
 
     log_info("==> PRTS will perform first switch...");
     // 进行第一次干员切换
-    prts->state = PRTS_STATE_IDLE;
     prts->operator_index = 0;
-    switch_operator(prts, 0);
+    prts_start_boot_anim(prts);
     
     prts_timer_create(
         &prts->timer_handle, 
