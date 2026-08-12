@@ -64,6 +64,8 @@
 #define PRTS_ASSET_CONFIG_FILENAME "epconfig.json"
 #define PRTS_ASSET_DIR "/assets/"
 #define PRTS_ASSET_DIR_SD SD_MOUNT_POINT "/assets/"
+#define PRTS_BOOT_ANIM_FILE "boot.mp4"
+#define PRTS_BOOT_ANIM_DURATION_MS 5000
 #define PRTS_TICK_PERIOD (1000 * 1000)
 // 相对 res/ 的内置资源 (运行时经 respath()/respath_lvfs() 解析到可执行文件同级)。
 #define PRTS_FALLBACK_ASSET_SUBDIR "fallback"

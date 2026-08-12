@@ -57,6 +57,15 @@ graph TD
 
 播放程序与电子通行证固件一起分发，可在[https://github.com/rhodesepass/buildroot/releases](https://github.com/rhodesepass/buildroot/releases)下载最新固件。
 
+## 开机动画
+
+将视频命名为 `boot.mp4`（编码约定与干员视频一致：360x640 显示、H.264），放到设备的
+`/assets/boot.mp4` 或 `/sd/assets/boot.mp4`，主程序启动时会在首次干员切换前全屏播放：
+
+- 时长默认 5 秒（`PRTS_BOOT_ANIM_DURATION_MS`，定义于 `src/config.h`），到点自动进入干员播放；
+- 播放期间按任意按键立即跳过；
+- 未放置该文件时自动跳过，不影响正常启动。
+
 ## 编译方法
 
 ### 直接编译

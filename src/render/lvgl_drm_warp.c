@@ -27,6 +27,9 @@
 #include "ui_screens/ui_preview.h"
 #include "ui_screens/ui_plane.h"
 
+// Boot animation key-skip: set in lvgl_drm_warp_init().
+static prts_t *s_boot_anim_prts = NULL;
+
 static uint32_t lvgl_drm_warp_tick_get_cb(void)
 {
     return (uint32_t)(get_mono_us() / 1000);
@@ -70,6 +73,11 @@ static void* lvgl_drm_warp_thread_entry(void *arg){
 
 // key_enc_evdev 的 input_cb：转发到手写屏的导航状态机。
 static void screen_key_event_cb(uint32_t key){
+    // 开机动画期间任意键跳过，不进入屏幕导航
+    if(s_boot_anim_prts && prts_boot_anim_active(s_boot_anim_prts)){
+        prts_boot_anim_skip(s_boot_anim_prts);
+        return;
+    }
     screens_handle_key(key);
 }
 
@@ -81,6 +89,7 @@ void lvgl_drm_warp_init(lvgl_drm_warp_t *lvgl_drm_warp,drm_warpper_t *drm_warppe
 
     lvgl_drm_warp->drm_warpper = drm_warpper;
     lvgl_drm_warp->layer_animation = layer_animation;
+    s_boot_anim_prts = prts;
 
     // 单 buffer 直绘(同 overlay)：只分配一块扫描 FB，挂载一次后不走 flip 队列。
     drm_warpper_allocate_buffer(drm_warpper, DRM_WARPPER_LAYER_UI, &lvgl_drm_warp->ui_buf);
