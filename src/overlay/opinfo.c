@@ -1727,11 +1727,19 @@ void overlay_opinfo_show_arknights(overlay_t* overlay,olopinfo_params_t* params)
     );
 
 
+    /*
+     * DEBE 在 C8(alpha)层参与混合时,帧末最后一条扫描线(显示行 639)会
+     * 输出白线。叠层在 init 时按 h=639 挂载(见 overlay.c),这里再按机型
+     * 决定停靠 Y:倒装机(BOE,yflip)需要 CRTC_Y=1,配合内核
+     * y' = vdisplay - y - h 映射后覆盖显示行 0..638,把最后一条扫描线让给
+     * 视频层,从而消除白线;正装机(HSD)停在 0 即可。
+     */
+    int settle_y = (access(SDROT_YFLIP_DT_PATH, F_OK) == 0) ? 1 : 0;
     layer_animation_ease_in_out_move(
         overlay->layer_animation,
         DRM_WARPPER_LAYER_OVERLAY,
         0, OVERLAY_HEIGHT,
-        0, 0,
+        0, settle_y,
         1 * 1000 * 1000, 0
     );
 }

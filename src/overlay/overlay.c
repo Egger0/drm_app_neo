@@ -117,10 +117,17 @@ int overlay_init(overlay_t* overlay,drm_warpper_t* drm_warpper,layer_animation_t
         log_error("overlay pitch mismatch: got %u, expect %d",
                   overlay->overlay_buf.pitch, OVERLAY_WIDTH * OVERLAY_BPP);
     }
-
     memset(overlay->overlay_buf.vaddr, 0, OVERLAY_BUF_BYTES);
 
-    drm_warpper_mount_layer(drm_warpper, DRM_WARPPER_LAYER_OVERLAY, OVERLAY_WIDTH, 0, &overlay->overlay_buf);
+    /*
+     * C8(alpha)层参与混合时 DEBE 在帧末最后一条扫描线输出白线(见
+     * opinfo.c 停靠 Y 的注释)。把叠层挂载高度设为 639(缓冲仍 360x640,
+     * 只少扫一行),让最后一条扫描线(显示行 639)不参与 C8 混合。
+     */
+    drm_warpper_mount_layer_rect(drm_warpper, DRM_WARPPER_LAYER_OVERLAY,
+                                 OVERLAY_WIDTH, 0, &overlay->overlay_buf,
+                                 OVERLAY_WIDTH, OVERLAY_HEIGHT - 1,
+                                 OVERLAY_WIDTH, OVERLAY_HEIGHT - 1);
 
     overlay->drm_warpper = drm_warpper;
     overlay->layer_animation = layer_animation;
