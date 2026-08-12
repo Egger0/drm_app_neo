@@ -23,7 +23,11 @@ int os_timer_arm(os_timer_handle_t *h, uint64_t first_us, uint64_t interval_us, 
 {
     DWORD due = us_to_ms_ceil(first_us);
     DWORD period = (interval_us != 0) ? us_to_ms_ceil(interval_us) : 0; // 0 ⇒ one-shot
-    DWORD flags = (interval_us != 0) ? WT_EXECUTEDEFAULT : WT_EXECUTEONLYONCE;
+    DWORD flags = WT_EXECUTEDEFAULT;
+    if(interval_us != 0)
+        flags |= WT_EXECUTELONGFUNCTION;
+    else
+        flags |= WT_EXECUTEONLYONCE;
 
     HANDLE t = NULL;
     if (!CreateTimerQueueTimer(&t, NULL, win_timer_shim,
