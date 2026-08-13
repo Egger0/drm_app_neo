@@ -16,6 +16,10 @@ extern "C" {
 #define LOGO_PRTS_PATH UI_IMG_DIR "/prts_64_inv.png"
 #endif
 #define LOGO_PRTS_FILE "prts_64_inv.png"
+#ifdef UI_IMG_DIR
+#define BG_CONTOUR_PATH UI_IMG_DIR "/bg_contour.png"
+#endif
+#define BG_CONTOUR_FILE "bg_contour.png"
 
 // 创建一个满屏根容器 (S 缩放后的 360x640)，无内边距。
 lv_obj_t *ui_screen_root(void);

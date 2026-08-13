@@ -45,6 +45,7 @@ static lv_obj_t *make_switch(lv_obj_t *root, int y, const char *text, bool on, l
     lv_obj_set_pos(lbl, S(22), S(y)); add_style_label_large(lbl); lv_label_set_text(lbl, text);
     lv_obj_t *sw = lv_switch_create(root);
     lv_obj_set_pos(sw, S(279), S(y)); lv_obj_set_size(sw, S(60), S(29));
+    add_style_switch(sw);
     if (on) lv_obj_add_state(sw, LV_STATE_CHECKED);
     lv_obj_add_event_cb(sw, cb, LV_EVENT_VALUE_CHANGED, NULL);
     return sw;
@@ -69,7 +70,7 @@ lv_obj_t *screen_settings_create(void)
     lv_obj_t *root = ui_screen_root();
     ui_header(root, "设备参数定值");
 
-    ui_small_text_button(root, 205, 8, 82, 32, UI_SEM_DEFAULT, "清除缓存", on_clear_cache);
+    ui_small_text_button(root, 190, 4, 82, 32, UI_SEM_DEFAULT, "清除缓存", on_clear_cache);
 
     make_switch(root, 49,  "低电量自动关机",        ui_backend_lowbat_trip_get(),  on_lowbat);
     make_switch(root, 93,  "(切换时)跳过入场动画",   ui_backend_no_intro_get(),     on_no_intro);

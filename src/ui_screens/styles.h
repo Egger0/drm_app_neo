@@ -37,6 +37,7 @@ void add_style_app_fg(lv_obj_t *obj);          // 应用"前台"角标
 void add_style_app_bg_notrunning(lv_obj_t *obj);// 应用"未运行"角标
 
 void add_style_fill(lv_obj_t *obj, ui_sem_t sem); // 语义底色 (按钮/面板)
+void add_style_switch(lv_obj_t *obj);            // 开关 (黄色 pill)
 void add_style_spinner_arc(lv_obj_t *obj);        // spinner 弧 (中性)
 void add_style_log_text(lv_obj_t *obj);           // 次要日志文字 (灰)
 void add_style_focus(lv_obj_t *obj);              // 加粗焦点外框 (可聚焦控件)

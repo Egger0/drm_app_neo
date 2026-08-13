@@ -1,6 +1,7 @@
 #include "screen_common.h"
 #include "screen_manager.h"
 #include "styles.h"
+#include "ui/ui_theme.h"
 #include "ui_metrics.h"
 #ifndef LOGO_PRTS_PATH
 #include "utils/respath.h"
@@ -24,9 +25,46 @@ lv_obj_t *ui_screen_root(void)
 
 void ui_header(lv_obj_t *root, const char *title)
 {
+    // 页头亮黄横带(#d8c839)：logo/标题统一放在横带上
+    lv_obj_t *bar = lv_obj_create(root);
+    lv_obj_remove_style_all(bar);
+    lv_obj_set_pos(bar, 0, 0);
+    lv_obj_set_size(bar, S(360), S(40));
+    lv_obj_set_style_bg_color(bar, lv_color_hex(0xd8c839), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(bar, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(bar, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(bar, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(bar, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // 页头亮黄向下渐变到屏幕底部(黄 #d8c839 -> 白)，缓解白底单调
+    lv_obj_t *fade = lv_obj_create(root);
+    lv_obj_remove_style_all(fade);
+    lv_obj_set_pos(fade, 0, S(40));
+    lv_obj_set_size(fade, S(360), S(600)); // 渐变直通屏幕底部(640-40)
+    lv_obj_set_style_bg_color(fade, lv_color_hex(0xd8c839), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(fade, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_grad_color(fade, lv_color_hex(0x999999), LV_PART_MAIN | LV_STATE_DEFAULT);  // 黄->浅灰渐变终点
+    lv_obj_set_style_bg_grad_dir(fade, LV_GRAD_DIR_VER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    // 渐变在对象前 60% 完成(600px 中约 360px 从黄到深灰)，之后保持深灰
+    lv_obj_set_style_bg_grad_stop(fade, 153, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(fade, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(fade, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_all(fade, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+
+    // 背景等高线装饰: 白色稀疏曲线, 落在黄->白渐变区, 随渐变隐入白底 (全部页面共用)
+    lv_obj_t *contour = lv_image_create(root);
+    lv_obj_set_pos(contour, 0, 0);
+    lv_obj_set_size(contour, S(360), S(640));
+    lv_obj_set_style_opa(contour, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+#ifdef BG_CONTOUR_PATH
+    lv_image_set_src(contour, BG_CONTOUR_PATH);
+#else
+    lv_image_set_src(contour, respath_lvfs(BG_CONTOUR_FILE));
+#endif
+
     lv_obj_t *logo = lv_image_create(root);
-    // logo 放右上角：360 - 36(显示宽) - 30(右边距)
-    lv_obj_set_pos(logo, S(294), S(9));
+    // logo 放右上角，避开系统层电池图标(电池从 x=330 起)：294 时右缘 330 重叠，左移到 286 留 8px
+    lv_obj_set_pos(logo, S(286), S(3));
 #ifdef LOGO_PRTS_PATH
     lv_image_set_src(logo, LOGO_PRTS_PATH);
 #else
@@ -37,7 +75,7 @@ void ui_header(lv_obj_t *root, const char *title)
     lv_image_set_scale(logo, 144 * UI_SCALE);
 
     lv_obj_t *t = lv_label_create(root);
-    lv_obj_set_pos(t, S(25), S(14));
+    lv_obj_set_pos(t, S(25), S(8));
     add_style_label_large(t);
     lv_label_set_text(t, title);
 }

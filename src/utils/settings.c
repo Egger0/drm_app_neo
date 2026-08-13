@@ -108,7 +108,7 @@ void settings_init(settings_t *settings){
     settings->ctrl_word.lowbat_trip = 1;
     settings->ctrl_word.no_intro_block = 0;
     settings->ctrl_word.no_overlay_block = 0;
-    settings->theme_id = 0;
+    settings->theme_id = 6;   // 默认主题: 终末地(白底四色, 原深色 0)
     pthread_mutex_init(&settings->mtx, NULL);
     settings_save(settings);
     return;

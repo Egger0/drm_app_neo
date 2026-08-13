@@ -80,7 +80,7 @@ static const ui_theme_preset_t s_presets[] = {
 };
 #define UI_THEME_COUNT ((int)(sizeof(s_presets) / sizeof(s_presets[0])))
 
-static int g_id = 0;
+static int g_id = 6;   // 默认主题: 终末地(白底四色, 原深色 0)
 
 int         ui_theme_count(void)   { return UI_THEME_COUNT; }
 const char *ui_theme_name(int id)  { return (id >= 0 && id < UI_THEME_COUNT) ? s_presets[id].name : ""; }

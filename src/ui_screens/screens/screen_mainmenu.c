@@ -16,6 +16,7 @@
 // 本屏私有状态：只存"之后还要访问"的少数控件。
 static struct {
     lv_obj_t *brightness;
+    lv_obj_t *track_bar;
     lv_obj_t *version;
     bool      suppress_evt;
 } self;
@@ -106,10 +107,44 @@ lv_obj_t *screen_mainmenu_create(void)
         lv_obj_set_pos(ic, S(25), S(290));
         lv_label_set_text(ic, UI_ICON_SUN);
     }
+    // 轨道: 固定长度浅灰条(与容器左端重合), 滑条本体透明仅承载滑钮
+    self.track_bar = lv_obj_create(root);
+    lv_obj_remove_style_all(self.track_bar);
+    lv_obj_set_pos(self.track_bar, S(60), S(300));
+    lv_obj_set_size(self.track_bar, S(270), S(8));
+    lv_obj_set_style_bg_color(self.track_bar, lv_color_hex(0xb0b0b0), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(self.track_bar, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(self.track_bar, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
+
     self.brightness = lv_slider_create(root);
     lv_obj_set_pos(self.brightness, S(60), S(300));
     lv_obj_set_size(self.brightness, S(270), S(10));
     lv_slider_set_range(self.brightness, 1, 9);
+    // 滑条本体透明: 去主题边框/浅色外框(DEFAULT/FOCUSED); FOCUS_KEY 保留 s_focus 黑圈
+    lv_obj_set_style_border_width(self.brightness, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_opa(self.brightness, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_border_width(self.brightness, 0, LV_PART_MAIN | LV_STATE_FOCUSED);
+    lv_obj_set_style_border_opa(self.brightness, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_FOCUSED);
+    lv_obj_set_style_border_width(self.brightness, 0, LV_PART_MAIN | LV_STATE_FOCUS_KEY);
+    lv_obj_set_style_border_opa(self.brightness, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_FOCUS_KEY);
+    lv_obj_set_style_outline_width(self.brightness, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_outline_opa(self.brightness, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_outline_width(self.brightness, 0, LV_PART_MAIN | LV_STATE_FOCUSED);
+    lv_obj_set_style_outline_opa(self.brightness, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_FOCUSED);
+    lv_obj_set_style_outline_width(self.brightness, 0, LV_PART_MAIN | LV_STATE_EDITED);
+    lv_obj_set_style_outline_opa(self.brightness, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_EDITED);
+    // 左右内边距限制滑钮行程, 两端齐平轨道
+    lv_obj_set_style_bg_opa(self.brightness, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(self.brightness, S(18), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(self.brightness, S(16), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_opa(self.brightness, LV_OPA_TRANSP, LV_PART_INDICATOR | LV_STATE_DEFAULT); // 填充由 track_bar 负责
+    // 滑钮: 白色 400米跑道式横向胶囊 (横宽竖窄, 两端半圆)
+    lv_obj_set_style_bg_color(self.brightness, lv_color_hex(0xffffff), LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_radius(self.brightness, LV_RADIUS_CIRCLE, LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_left(self.brightness, S(16), LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_right(self.brightness, S(16), LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_top(self.brightness, S(2), LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_pad_bottom(self.brightness, S(2), LV_PART_KNOB | LV_STATE_DEFAULT);
     lv_obj_add_event_cb(self.brightness, on_brightness, LV_EVENT_VALUE_CHANGED, NULL);
     lv_obj_add_event_cb(self.brightness, on_brightness_key,
                         LV_EVENT_KEY | LV_EVENT_PREPROCESS, NULL);

@@ -13,3 +13,11 @@ appconfig.json
 # font/ 根下的裁剪产物 (几 M) 随仓库提交，供 CMake 拷进 res/fonts。
 font/original/
 bridge_mcp.py
+
+# ??/????,???
+_lvgl-src/
+prep_uuid*.sh
+test_uuid.c
+src/drm_warpper.c
+src/opinfo.c
+src/overlay.c
