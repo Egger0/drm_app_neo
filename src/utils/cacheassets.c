@@ -53,6 +53,16 @@ void cacheassets_put_asset(cacheassets_t* cacheassets,cacheasset_asset_id_t asse
         return;
     }
     fclose(f);
+    /*
+     * DEBE 帧末会把 CLUT[31] 当最后一条扫描线的填充色(见 config.h
+     * C8PAL_IDX_DEBE_LASTLINE),31 号必须保持黑。旧素材用旧调色板量化,
+     * 31 号是近白灰阶(0xFFDDDDDD),这里在加载时重映射到 32 号(0xFFEEEEEE),
+     * 避免这些像素在新调色板下显示成黑斑。
+     */
+    for(int i = 0; i < size; i++){
+        if(dst[i] == (uint8_t)C8PAL_IDX_DEBE_LASTLINE)
+            dst[i] = (uint8_t)(C8PAL_IDX_DEBE_LASTLINE + 1);
+    }
     cacheassets->asset_w[asset_id] = w;
     cacheassets->asset_h[asset_id] = h;
     cacheassets->asset_addr[asset_id] = dst;

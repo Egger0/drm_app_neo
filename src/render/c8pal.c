@@ -103,6 +103,10 @@ void c8pal_write_range(int base, const uint32_t* colors, int n)
 
 void c8pal_commit(void)
 {
+    /* DEBE 帧末会把 CLUT[31] 当最后一条扫描线的填充色(见 config.h
+     * C8PAL_IDX_DEBE_LASTLINE);image 模式整表覆盖会冲掉烘焙段的 31 号,
+     * 这里每次提交都强制钉成黑,防白线复现。 */
+    s_shadow[C8PAL_IDX_DEBE_LASTLINE] = 0xFF000000u;
     drm_warpper_set_palette(s_dw, s_shadow);
     memset(s_lut_op, 0xFF, sizeof(s_lut_op));
     memset(s_lut_tr, 0xFF, sizeof(s_lut_tr));
