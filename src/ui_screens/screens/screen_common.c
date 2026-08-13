@@ -25,17 +25,19 @@ lv_obj_t *ui_screen_root(void)
 void ui_header(lv_obj_t *root, const char *title)
 {
     lv_obj_t *logo = lv_image_create(root);
-    lv_obj_set_pos(logo, S(15), S(10));
+    // logo 放右上角：360 - 36(显示宽) - 30(右边距)
+    lv_obj_set_pos(logo, S(294), S(9));
 #ifdef LOGO_PRTS_PATH
     lv_image_set_src(logo, LOGO_PRTS_PATH);
 #else
     lv_image_set_src(logo, respath_lvfs(LOGO_PRTS_FILE));
 #endif
     lv_image_set_pivot(logo, 0, 0);
-    lv_image_set_scale(logo, 128 * UI_SCALE);
+    // 源图 64x64：160=LVGL 62.5% 显示 40px，略大；144=56.25% (36px)
+    lv_image_set_scale(logo, 144 * UI_SCALE);
 
     lv_obj_t *t = lv_label_create(root);
-    lv_obj_set_pos(t, S(55), S(14));
+    lv_obj_set_pos(t, S(25), S(14));
     add_style_label_large(t);
     lv_label_set_text(t, title);
 }

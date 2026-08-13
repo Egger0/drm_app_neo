@@ -65,6 +65,18 @@ static const ui_theme_preset_t s_presets[] = {
         [UI_C_ACCENT]=0x2aa198,
         [UI_C_NEUTRAL]=0xeee8d5, [UI_C_MUTED]=0x93a1a1, [UI_C_SURFACE]=0xeee8d5,
         [UI_C_INFO]=0x6c71c4,    [UI_C_ON_ACCENT]=0xffffff, [UI_C_BG]=0xfdf6e3 } },
+
+    /* 终末地(白底四色版): 只保留黑/灰/黄/白, 白色做背景, 黑灰做层次,
+     * 金黄 #e8c600 做唯一强调(按钮/角标/焦点), 危险/黑底配白字。
+     * 对应官网浅色区 #f0f0f0/#e5e5e5 灰阶 + #191919 深字 + 黄点缀。 */
+    { .name = "终末地", .dark = false, .pal = {
+        [UI_C_PRIMARY]=0xe8c600, [UI_C_PRIMARY_FOCUS]=0xd2ad00,
+        [UI_C_WARNING]=0xe8c600,
+        [UI_C_DANGER]=0x1a1a1a,  [UI_C_DANGER_FOCUS]=0x3a3a3a,
+        [UI_C_SUCCESS]=0xe8c600,
+        [UI_C_ACCENT]=0x191919,
+        [UI_C_NEUTRAL]=0xe6e6e6, [UI_C_MUTED]=0x8c8c8c, [UI_C_SURFACE]=0xf2f2f2,
+        [UI_C_INFO]=0x6e6e6e,    [UI_C_ON_ACCENT]=0x141414, [UI_C_BG]=0xffffff } },
 };
 #define UI_THEME_COUNT ((int)(sizeof(s_presets) / sizeof(s_presets[0])))
 

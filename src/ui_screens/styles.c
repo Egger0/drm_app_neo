@@ -155,8 +155,13 @@ void styles_apply_palette(void)
 {
     if (!s_inited) { styles_ensure(); return; } // ensure 末尾会回调本函数
 
-    lv_style_set_bg_color(&s_main_btn_def,   ui_color(UI_C_PRIMARY));
-    lv_style_set_bg_color(&s_main_btn_foc,   ui_color(UI_C_PRIMARY_FOCUS));
+    // 主按钮常态与聚焦都用中性浅灰打底，选中不加深，靠焦点外框(s_focus)区分；
+    // 主题主色留给角标/状态条做点缀。
+    lv_style_set_bg_color(&s_main_btn_def,   ui_color(UI_C_NEUTRAL));
+    lv_style_set_bg_color(&s_main_btn_foc,   ui_color(UI_C_NEUTRAL));
+    // 主按钮继承 LVGL 主题默认白字，黄底上不可读；统一按 ON_ACCENT(黑) 走。
+    lv_style_set_text_color(&s_main_btn_def, ui_color(UI_C_ON_ACCENT));
+    lv_style_set_text_color(&s_main_btn_foc, ui_color(UI_C_ON_ACCENT));
     lv_style_set_bg_color(&s_main_small_def, ui_color(UI_C_DANGER));
     lv_style_set_bg_color(&s_main_small_foc, ui_color(UI_C_DANGER_FOCUS));
     lv_style_set_bg_color(&s_op_btn_def,     ui_color(UI_C_NEUTRAL));
@@ -168,7 +173,9 @@ void styles_apply_palette(void)
     lv_color_t list_text = ui_theme_is_dark() ? lv_palette_lighten(LV_PALETTE_GREY, 5)
                                               : lv_palette_darken(LV_PALETTE_GREY, 4);
     lv_style_set_text_color(&s_op_btn_def, list_text);
-    lv_style_set_text_color(&s_op_btn_foc, ui_color(UI_C_ON_ACCENT));
+    // 聚焦底是 accent 高亮：白底主题里 accent=黑，ON_ACCENT(黑) 会黑底黑字，
+    // 统一白字 (各主题 accent 均为中亮色，白字可读)。
+    lv_style_set_text_color(&s_op_btn_foc, lv_color_white());
 
     lv_style_set_bg_color(&s_flag_sd,     ui_color(UI_C_INFO));
     lv_style_set_bg_color(&s_flag_run,    ui_color(UI_C_SUCCESS));
@@ -185,7 +192,8 @@ void styles_apply_palette(void)
     // 中性底不强制文字色，随 LVGL 主题深浅走 (灰底配灰底该有的字色)。
     lv_style_set_text_color(&s_fill_primary, ui_color(UI_C_ON_ACCENT));
     lv_style_set_text_color(&s_fill_warning, ui_color(UI_C_ON_ACCENT));
-    lv_style_set_text_color(&s_fill_danger,  ui_color(UI_C_ON_ACCENT));
+    // danger 底为黑/深红，统一白字 (ON_ACCENT 在黄底主题里是黑字)。
+    lv_style_set_text_color(&s_fill_danger,  lv_color_white());
     lv_style_set_text_color(&s_fill_success, ui_color(UI_C_ON_ACCENT));
 
     lv_style_set_arc_color(&s_spinner_arc, ui_color(UI_C_MUTED));

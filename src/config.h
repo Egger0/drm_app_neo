@@ -378,7 +378,7 @@
 #define UI_WARNING_MAX_ICON_LENGTH 16
 
 #define UI_COLOR_ERROR 0xffb93030
-#define UI_COLOR_WARNING 0xff8b7200
+#define UI_COLOR_WARNING 0xffd8c839
 #define UI_COLOR_INFO 0xff646464 // 我不是故意的
 #define UI_COLOR_OK 0xff0d6802
 
