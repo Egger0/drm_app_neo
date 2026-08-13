@@ -16,7 +16,7 @@ typedef struct {
     transition_type_t type;
 
     // fade,move,swipe
-    char image_path[128];
+    char image_path[512];
     int image_w;
     int image_h;
     uint32_t* image_addr;

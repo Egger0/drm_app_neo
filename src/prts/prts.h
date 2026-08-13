@@ -17,7 +17,7 @@ typedef enum {
 } display_type_t;
 
 typedef struct {
-    char path[128];
+    char path[512];
 
     // only valid in intro:
     bool enabled;
@@ -34,7 +34,7 @@ typedef struct {
     char operator_name[40];
     uuid_t uuid;
     char description[256];
-    char icon_path[128];
+    char icon_path[512];
     display_type_t disp_type;
     prts_source_t source;
     

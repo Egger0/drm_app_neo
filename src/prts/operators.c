@@ -38,7 +38,7 @@ static void validate_optional_image_path(
     join_path(abs_path, sizeof(abs_path), op_dir, rel_path);
 
     // 仅检查文件存在和可读性，不加载图片（性能优化）
-    if (!file_exists_readable(abs_path)) {
+    if (!path_is_file(abs_path)) {
         parse_log_file(prts->parse_log_f, (char*)op_dir, (char*)field_for_log, PARSE_LOG_WARN);
         return;
     }
@@ -397,7 +397,7 @@ static int operator_try_load_inner(prts_t *prts,prts_operator_entry_t* operator,
         char abs_icon[256];
         abs_icon[0] = '\0';
         join_path(abs_icon, sizeof(abs_icon), path, icon);
-        if (!file_exists_readable(abs_icon)) {
+        if (!path_is_file(abs_icon)) {
             parse_log_file(prts->parse_log_f, path, "icon 文件不存在，使用默认icon", PARSE_LOG_WARN);
             safe_strcpy(operator->icon_path, sizeof(operator->icon_path), respath_lvfs(RES_DEFAULT_ICON_FILE));
         } else {
@@ -440,7 +440,7 @@ static int operator_try_load_inner(prts_t *prts,prts_operator_entry_t* operator,
         return -1;
     }
     join_path(operator->loop_video.path, sizeof(operator->loop_video.path), path, loop_file);
-    if (!file_exists_readable(operator->loop_video.path)) {
+    if (!path_is_file(operator->loop_video.path)) {
         parse_log_file(prts->parse_log_f, path, "loop.file 文件不存在", PARSE_LOG_ERROR);
         cJSON_Delete(json);
         return -1;
@@ -467,7 +467,7 @@ static int operator_try_load_inner(prts_t *prts,prts_operator_entry_t* operator,
                 return -1;
             }
             join_path(operator->intro_video.path, sizeof(operator->intro_video.path), path, intro_file);
-            if (!file_exists_readable(operator->intro_video.path)) {
+            if (!path_is_file(operator->intro_video.path)) {
                 parse_log_file(prts->parse_log_f, path, "intro.file 文件不存在", PARSE_LOG_ERROR);
                 cJSON_Delete(json);
                 return -1;

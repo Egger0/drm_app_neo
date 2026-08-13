@@ -100,7 +100,7 @@ typedef struct {
 
     // image 来源二选一
     int cacheasset_id;    // >=0: cacheasset_asset_id_t，忽略 image_path
-    char image_path[128]; // 用户图片绝对路径（overlay_opinfo_load_image 加载）
+    char image_path[512]; // 用户图片绝对路径（overlay_opinfo_load_image 加载）
     int image_w, image_h; // 加载后的物理像素尺寸
     uint32_t* image_addr;
 } olopinfo_element_t;
@@ -118,7 +118,7 @@ typedef struct {
     int src_downscale;
 
     // image 类型：图片路径（build 后转入元素）
-    char image_path[128];
+    char image_path[512];
 
     // arknights 带有简单动态效果的明日方舟通行证模板（专用实现，不走元素引擎）
     char operator_name[20];
@@ -127,12 +127,12 @@ typedef struct {
     char staff_text[40];
     char aux_text[256];
 
-    char class_path[128];
+    char class_path[512];
     int class_w;
     int class_h;
     uint32_t* class_addr;
 
-    char logo_path[128];
+    char logo_path[512];
     int logo_w;
     int logo_h;
     uint32_t* logo_addr;

@@ -14,13 +14,14 @@
 FROM archlinux:latest
 
 # 交叉工具链 + 构建工具
-RUN pacman -Sy --noconfirm --needed archlinux-keyring && \
+RUN printf 'Server = https://mirrors.tuna.tsinghua.edu.cn/archlinux/$repo/os/$arch\n' > /etc/pacman.d/mirrorlist && \
+    pacman -Sy --noconfirm --needed archlinux-keyring && \
     pacman -S  --noconfirm --needed mingw-w64-gcc cmake make pkgconf && \
     yes | pacman -Scc
 
 # 挂 MSYS2 mingw64 仓库（预编译 Windows 二进制，包内路径即 /mingw64/…）
 # 用官方源站 repo.msys2.org（mirror.msys2.org 的 CDN 后端偶有未同步导致 404）
-RUN printf '\n[mingw64]\nSigLevel = Never\nServer = https://repo.msys2.org/mingw/mingw64/\n' >> /etc/pacman.conf && \
+RUN printf '\n[mingw64]\nSigLevel = Never\nServer = https://mirrors.tuna.tsinghua.edu.cn/msys2/mingw/mingw64/\n' >> /etc/pacman.conf && \
     pacman -Sy --noconfirm && \
     pacman -S --noconfirm --noscriptlet \
       mingw-w64-x86_64-SDL2 \

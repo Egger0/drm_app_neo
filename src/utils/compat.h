@@ -10,6 +10,12 @@
 #include <io.h>
 #include <fcntl.h>
 
+/* windows.h/rpc 头链可能把 uuid_t 定义成 UUID/GUID, 与 utils/uuid.h 的
+ * uuid_t 冲突。项目统一用 utils/uuid.h 的类型, 这里顶掉冲突宏。 */
+#ifdef uuid_t
+#undef uuid_t
+#endif
+
 // mingw 自带 usleep（unistd.h），无需垫。
 
 // mkdir(path,mode) 两参 → _mkdir(path) 单参（Windows 无 POSIX 权限位）。
