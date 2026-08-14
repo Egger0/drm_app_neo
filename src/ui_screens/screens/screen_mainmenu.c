@@ -5,6 +5,7 @@
 #include "screen_common.h"
 #include "screen_manager.h"
 #include "styles.h"
+#include "ui/ui_theme.h"
 #include "ui_backend.h"
 #include "ui_metrics.h"
 #include "ui/font_registry.h"
@@ -112,7 +113,7 @@ lv_obj_t *screen_mainmenu_create(void)
     lv_obj_remove_style_all(self.track_bar);
     lv_obj_set_pos(self.track_bar, S(60), S(300));
     lv_obj_set_size(self.track_bar, S(270), S(8));
-    lv_obj_set_style_bg_color(self.track_bar, lv_color_hex(0xb0b0b0), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(self.track_bar, ui_color(UI_C_TRACK), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(self.track_bar, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(self.track_bar, LV_RADIUS_CIRCLE, LV_PART_MAIN | LV_STATE_DEFAULT);
 
@@ -139,7 +140,7 @@ lv_obj_t *screen_mainmenu_create(void)
     lv_obj_set_style_pad_right(self.brightness, S(16), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(self.brightness, LV_OPA_TRANSP, LV_PART_INDICATOR | LV_STATE_DEFAULT); // 填充由 track_bar 负责
     // 滑钮: 白色 400米跑道式横向胶囊 (横宽竖窄, 两端半圆)
-    lv_obj_set_style_bg_color(self.brightness, lv_color_hex(0xffffff), LV_PART_KNOB | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(self.brightness, ui_color(UI_C_KNOB), LV_PART_KNOB | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(self.brightness, LV_RADIUS_CIRCLE, LV_PART_KNOB | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_left(self.brightness, S(16), LV_PART_KNOB | LV_STATE_DEFAULT);
     lv_obj_set_style_pad_right(self.brightness, S(16), LV_PART_KNOB | LV_STATE_DEFAULT);

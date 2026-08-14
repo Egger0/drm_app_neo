@@ -30,7 +30,7 @@ void ui_header(lv_obj_t *root, const char *title)
     lv_obj_remove_style_all(bar);
     lv_obj_set_pos(bar, 0, 0);
     lv_obj_set_size(bar, S(360), S(40));
-    lv_obj_set_style_bg_color(bar, lv_color_hex(0xd8c839), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(bar, ui_color(UI_C_GRAD_START), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(bar, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_radius(bar, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_border_width(bar, 0, LV_PART_MAIN | LV_STATE_DEFAULT);
@@ -41,9 +41,9 @@ void ui_header(lv_obj_t *root, const char *title)
     lv_obj_remove_style_all(fade);
     lv_obj_set_pos(fade, 0, S(40));
     lv_obj_set_size(fade, S(360), S(600)); // 渐变直通屏幕底部(640-40)
-    lv_obj_set_style_bg_color(fade, lv_color_hex(0xd8c839), LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_bg_color(fade, ui_color(UI_C_GRAD_START), LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_set_style_bg_opa(fade, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_DEFAULT);
-    lv_obj_set_style_bg_grad_color(fade, lv_color_hex(0x999999), LV_PART_MAIN | LV_STATE_DEFAULT);  // 黄->浅灰渐变终点
+    lv_obj_set_style_bg_grad_color(fade, ui_color(UI_C_GRAD_END), LV_PART_MAIN | LV_STATE_DEFAULT);  // 黄->浅灰渐变终点
     lv_obj_set_style_bg_grad_dir(fade, LV_GRAD_DIR_VER, LV_PART_MAIN | LV_STATE_DEFAULT);
     // 渐变在对象前 60% 完成(600px 中约 360px 从黄到深灰)，之后保持深灰
     lv_obj_set_style_bg_grad_stop(fade, 153, LV_PART_MAIN | LV_STATE_DEFAULT);

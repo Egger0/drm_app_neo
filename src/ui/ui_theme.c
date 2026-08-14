@@ -19,7 +19,7 @@ static const ui_theme_preset_t s_presets[] = {
         [UI_C_SUCCESS]=0x149b5b,
         [UI_C_ACCENT]=0x67d9ec,
         [UI_C_NEUTRAL]=0x494947, [UI_C_MUTED]=0x919197, [UI_C_SURFACE]=0x3a3a3a,
-        [UI_C_INFO]=0x2c3cbd,    [UI_C_ON_ACCENT]=0xffffff, [UI_C_BG]=0x1a1a1a } },
+        [UI_C_INFO]=0x2c3cbd,    [UI_C_ON_ACCENT]=0xffffff, [UI_C_BG]=0x1a1a1a, [UI_C_GRAD_START]=0x20679f, [UI_C_GRAD_END]=0x3a3a3a, [UI_C_TRACK]=0x494947, [UI_C_KNOB]=0xffffff } },
 
     { .name = "浅色", .dark = false, .pal = {
         [UI_C_PRIMARY]=0x2f7dbf, [UI_C_PRIMARY_FOCUS]=0x4a9ad8,
@@ -28,7 +28,7 @@ static const ui_theme_preset_t s_presets[] = {
         [UI_C_SUCCESS]=0x1a9e63,
         [UI_C_ACCENT]=0x2f9fb5,
         [UI_C_NEUTRAL]=0xc8c8c6, [UI_C_MUTED]=0x9a9aa0, [UI_C_SURFACE]=0xf2f1f6,
-        [UI_C_INFO]=0x3a4bd0,    [UI_C_ON_ACCENT]=0xffffff, [UI_C_BG]=0xeceef2 } },
+        [UI_C_INFO]=0x3a4bd0,    [UI_C_ON_ACCENT]=0xffffff, [UI_C_BG]=0xeceef2, [UI_C_GRAD_START]=0x2f7dbf, [UI_C_GRAD_END]=0x9a9aa0, [UI_C_TRACK]=0xc8c8c6, [UI_C_KNOB]=0xffffff } },
 
     { .name = "Nord", .dark = true, .pal = {
         [UI_C_PRIMARY]=0x5e81ac, [UI_C_PRIMARY_FOCUS]=0x81a1c1,
@@ -37,7 +37,7 @@ static const ui_theme_preset_t s_presets[] = {
         [UI_C_SUCCESS]=0x8aa872,
         [UI_C_ACCENT]=0x88c0d0,
         [UI_C_NEUTRAL]=0x434c5e, [UI_C_MUTED]=0x4c566a, [UI_C_SURFACE]=0x3b4252,
-        [UI_C_INFO]=0xb48ead,    [UI_C_ON_ACCENT]=0xffffff, [UI_C_BG]=0x2e3440 } },
+        [UI_C_INFO]=0xb48ead,    [UI_C_ON_ACCENT]=0xffffff, [UI_C_BG]=0x2e3440, [UI_C_GRAD_START]=0x5e81ac, [UI_C_GRAD_END]=0x3b4252, [UI_C_TRACK]=0x434c5e, [UI_C_KNOB]=0xffffff } },
 
     { .name = "Gruvbox", .dark = true, .pal = {
         [UI_C_PRIMARY]=0x458588, [UI_C_PRIMARY_FOCUS]=0x83a598,
@@ -46,7 +46,7 @@ static const ui_theme_preset_t s_presets[] = {
         [UI_C_SUCCESS]=0x98971a,
         [UI_C_ACCENT]=0x8ec07c,
         [UI_C_NEUTRAL]=0x3c3836, [UI_C_MUTED]=0x665c54, [UI_C_SURFACE]=0x32302f,
-        [UI_C_INFO]=0xb16286,    [UI_C_ON_ACCENT]=0xffffff, [UI_C_BG]=0x282828 } },
+        [UI_C_INFO]=0xb16286,    [UI_C_ON_ACCENT]=0xffffff, [UI_C_BG]=0x282828, [UI_C_GRAD_START]=0x458588, [UI_C_GRAD_END]=0x32302f, [UI_C_TRACK]=0x3c3836, [UI_C_KNOB]=0xffffff } },
 
     { .name = "Solarized 深", .dark = true, .pal = {
         [UI_C_PRIMARY]=0x268bd2, [UI_C_PRIMARY_FOCUS]=0x3a9fe6,
@@ -55,7 +55,7 @@ static const ui_theme_preset_t s_presets[] = {
         [UI_C_SUCCESS]=0x859900,
         [UI_C_ACCENT]=0x2aa198,
         [UI_C_NEUTRAL]=0x073642, [UI_C_MUTED]=0x586e75, [UI_C_SURFACE]=0x073642,
-        [UI_C_INFO]=0x6c71c4,    [UI_C_ON_ACCENT]=0xffffff, [UI_C_BG]=0x002b36 } },
+        [UI_C_INFO]=0x6c71c4,    [UI_C_ON_ACCENT]=0xffffff, [UI_C_BG]=0x002b36, [UI_C_GRAD_START]=0x268bd2, [UI_C_GRAD_END]=0x073642, [UI_C_TRACK]=0x073642, [UI_C_KNOB]=0xffffff } },
 
     { .name = "Solarized 浅", .dark = false, .pal = {
         [UI_C_PRIMARY]=0x268bd2, [UI_C_PRIMARY_FOCUS]=0x1a6fb0,
@@ -64,7 +64,7 @@ static const ui_theme_preset_t s_presets[] = {
         [UI_C_SUCCESS]=0x859900,
         [UI_C_ACCENT]=0x2aa198,
         [UI_C_NEUTRAL]=0xeee8d5, [UI_C_MUTED]=0x93a1a1, [UI_C_SURFACE]=0xeee8d5,
-        [UI_C_INFO]=0x6c71c4,    [UI_C_ON_ACCENT]=0xffffff, [UI_C_BG]=0xfdf6e3 } },
+        [UI_C_INFO]=0x6c71c4,    [UI_C_ON_ACCENT]=0xffffff, [UI_C_BG]=0xfdf6e3, [UI_C_GRAD_START]=0x268bd2, [UI_C_GRAD_END]=0x93a1a1, [UI_C_TRACK]=0xeee8d5, [UI_C_KNOB]=0xffffff } },
 
     /* 终末地(白底四色版): 只保留黑/灰/黄/白, 白色做背景, 黑灰做层次,
      * 金黄 #e8c600 做唯一强调(按钮/角标/焦点), 危险/黑底配白字。
@@ -76,7 +76,7 @@ static const ui_theme_preset_t s_presets[] = {
         [UI_C_SUCCESS]=0xe8c600,
         [UI_C_ACCENT]=0x191919,
         [UI_C_NEUTRAL]=0xe6e6e6, [UI_C_MUTED]=0x8c8c8c, [UI_C_SURFACE]=0xf2f2f2,
-        [UI_C_INFO]=0x6e6e6e,    [UI_C_ON_ACCENT]=0x141414, [UI_C_BG]=0xffffff } },
+        [UI_C_INFO]=0x6e6e6e,    [UI_C_ON_ACCENT]=0x141414, [UI_C_BG]=0xffffff, [UI_C_GRAD_START]=0xd8c839, [UI_C_GRAD_END]=0x999999, [UI_C_TRACK]=0xb0b0b0, [UI_C_KNOB]=0xffffff } },
 };
 #define UI_THEME_COUNT ((int)(sizeof(s_presets) / sizeof(s_presets[0])))
 

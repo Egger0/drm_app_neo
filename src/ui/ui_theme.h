@@ -26,6 +26,10 @@ typedef enum {
     UI_C_ON_ACCENT,       // 强调色底上的文字 (通常白)
     UI_C_BG,              // 屏幕背景
     UI_C_TEXT,            // 文字
+    UI_C_GRAD_START,      // 背景渐变起点 (品牌黄/主题强调)
+    UI_C_GRAD_END,        // 背景渐变终点 (浅灰/深灰)
+    UI_C_TRACK,           // 亮度条/滑块轨道
+    UI_C_KNOB,            // 滑块钮
     UI_C_COUNT
 } ui_color_role_t;
 

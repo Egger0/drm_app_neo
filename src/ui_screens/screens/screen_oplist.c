@@ -5,6 +5,7 @@
 #include "screen_common.h"
 #include "screen_manager.h"
 #include "styles.h"
+#include "ui/ui_theme.h"
 #include "ui_backend.h"
 #include "ui_metrics.h"
 
@@ -195,7 +196,7 @@ static void make_slot(int i)
 
     // 排序模式"拎起"高亮：被拎的槽打 USER_1 —— 整块换醒目橙底，
     // 与普通(灰底)/焦点(青底)明显拉开，一眼看出该项正处于"可上下移动"状态。
-    lv_obj_set_style_bg_color(s->btn, lv_color_hex(0xF07000), LV_PART_MAIN | LV_STATE_USER_1);
+    lv_obj_set_style_bg_color(s->btn, ui_color(UI_C_WARNING), LV_PART_MAIN | LV_STATE_USER_1);
     lv_obj_set_style_bg_opa(s->btn, LV_OPA_COVER, LV_PART_MAIN | LV_STATE_USER_1);
 
     s->logo = lv_image_create(s->btn);

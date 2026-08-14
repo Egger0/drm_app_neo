@@ -2,6 +2,7 @@
 // 两个板型底下路线不同但接口一致，见 buildroot/board/rhodesisland/epass/BATTERY.md。
 #include "ui_screens/ui_services.h"
 #include "ui/font_registry.h"
+#include "ui/ui_theme.h"
 #include "utils/log.h"
 #include "utils/compat.h"
 #include "config.h"
@@ -165,7 +166,7 @@ void ui_battery_init(){
     g_battery_obj = lv_label_create(lv_layer_top());
     lv_obj_set_pos(g_battery_obj, UI_WIDTH - S(UI_BATTERY_PADDING) - S(UI_BATTERY_SIZE), S(UI_BATTERY_PADDING));
     lv_obj_set_style_text_font(g_battery_obj, font_get(FONT_ICON, UI_BATTERY_SIZE), LV_PART_MAIN);
-    lv_obj_set_style_text_color(g_battery_obj, lv_color_hex(0xffffffff), LV_PART_MAIN);
+    lv_obj_set_style_text_color(g_battery_obj, ui_color(UI_C_ON_ACCENT), LV_PART_MAIN);
     lv_label_set_text(g_battery_obj, UI_BATTERY_FULL_CHAR);
     lv_obj_set_style_text_align(g_battery_obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN);
 
