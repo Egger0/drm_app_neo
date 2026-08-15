@@ -1,4 +1,5 @@
 #include "styles.h"
+#include <stdio.h>
 #include "ui/font_registry.h"
 #include "ui/ui_theme.h"
 #include "ui_metrics.h"
@@ -114,18 +115,7 @@ static void styles_ensure(void)
 
     lv_style_init(&s_main_btn_def);
     lv_style_set_text_align(&s_main_btn_def, LV_TEXT_ALIGN_CENTER);
-    // 常态轻微投影，按钮自带一点浮起感
-    lv_style_set_shadow_width(&s_main_btn_def, S(4));
-    lv_style_set_shadow_color(&s_main_btn_def, lv_color_black());
-    lv_style_set_shadow_opa(&s_main_btn_def, LV_OPA_20);
-    lv_style_set_shadow_offset_y(&s_main_btn_def, S(2));
     lv_style_init(&s_main_btn_foc);
-    // 选中悬浮：阴影加深 + 按钮上移 2px（替代原焦点外框）
-    lv_style_set_shadow_width(&s_main_btn_foc, S(18));
-    lv_style_set_shadow_color(&s_main_btn_foc, lv_color_black());
-    lv_style_set_shadow_opa(&s_main_btn_foc, LV_OPA_40);
-    lv_style_set_shadow_offset_y(&s_main_btn_foc, S(8));
-    lv_style_set_translate_y(&s_main_btn_foc, S(-4));
 
     lv_style_init(&s_main_small_def);
     lv_style_init(&s_main_small_foc);
@@ -158,13 +148,8 @@ static void styles_ensure(void)
     lv_style_set_outline_pad(&s_focus, S(2));
     lv_style_set_outline_opa(&s_focus, LV_OPA_COVER);
 
-    // 通用聚焦悬浮：阴影加深 + 上移 4px，套到所有可聚焦按钮
+    // 通用聚焦悬浮(阴影+上移): 终末地专属, 具体值在 styles_apply_palette 按 endfield 设
     lv_style_init(&s_focus_float);
-    lv_style_set_shadow_width(&s_focus_float, S(18));
-    lv_style_set_shadow_color(&s_focus_float, lv_color_black());
-    lv_style_set_shadow_opa(&s_focus_float, LV_OPA_40);
-    lv_style_set_shadow_offset_y(&s_focus_float, S(8));
-    lv_style_set_translate_y(&s_focus_float, S(-4));
 
     lv_style_init(&s_screen_bg);
     lv_style_set_bg_opa(&s_screen_bg, LV_OPA_COVER);
@@ -182,9 +167,6 @@ static void styles_ensure(void)
     lv_style_init(&s_sw_knob);
     lv_style_set_radius(&s_sw_knob, LV_RADIUS_CIRCLE);
     lv_style_set_bg_opa(&s_sw_knob, LV_OPA_COVER);
-    lv_style_set_shadow_width(&s_sw_knob, S(3));
-    lv_style_set_shadow_opa(&s_sw_knob, LV_OPA_30);
-    lv_style_set_shadow_offset_y(&s_sw_knob, S(1));
     lv_style_init(&s_sw_knob_chk);
     lv_style_set_radius(&s_sw_knob_chk, LV_RADIUS_CIRCLE);
     lv_style_set_bg_opa(&s_sw_knob_chk, LV_OPA_COVER);
@@ -196,27 +178,34 @@ void styles_apply_palette(void)
 {
     if (!s_inited) { styles_ensure(); return; } // ensure 末尾会回调本函数
 
-    // 主按钮常态与聚焦都用中性浅灰打底，选中不加深，靠焦点外框(s_focus)区分；
-    // 主题主色留给角标/状态条做点缀。
-    lv_style_set_bg_color(&s_main_btn_def,   ui_color(UI_C_NEUTRAL));
-    lv_style_set_bg_color(&s_main_btn_foc,   ui_color(UI_C_NEUTRAL));
-    // 主按钮继承 LVGL 主题默认白字，黄底上不可读；统一按 ON_ACCENT(黑) 走。
-    lv_style_set_text_color(&s_main_btn_def, ui_color(UI_C_ON_ACCENT));
-    lv_style_set_text_color(&s_main_btn_foc, ui_color(UI_C_ON_ACCENT));
+    // 主按钮/选中态: 终末地专属配色 vs 其他主题原始设计(dce1d64)
+    if (ui_theme_is_endfield()) {
+        // 终末地: 主按钮中性浅灰底 + 黑字, 聚焦黄底黑字(签名式选中态)
+        lv_style_set_bg_color(&s_main_btn_def,   ui_color(UI_C_NEUTRAL));
+        lv_style_set_bg_color(&s_main_btn_foc,   ui_color(UI_C_NEUTRAL));
+        lv_style_set_text_color(&s_main_btn_def, ui_color(UI_C_ON_ACCENT));
+        lv_style_set_text_color(&s_main_btn_foc, ui_color(UI_C_ON_ACCENT));
+        lv_style_set_bg_color(&s_op_btn_foc,     ui_color(UI_C_PRIMARY));
+        lv_style_set_text_color(&s_op_btn_foc,   ui_color(UI_C_ON_ACCENT));
+    } else {
+        // 其他主题(原始设计): 主按钮主色底+白字, 聚焦 accent 高亮底+白字
+        lv_style_set_bg_color(&s_main_btn_def,   ui_color(UI_C_PRIMARY));
+        lv_style_set_bg_color(&s_main_btn_foc,   ui_color(UI_C_PRIMARY_FOCUS));
+        lv_style_set_text_color(&s_main_btn_def, lv_color_white());
+        lv_style_set_text_color(&s_main_btn_foc, lv_color_white());
+        lv_style_set_bg_color(&s_op_btn_foc,     ui_color(UI_C_ACCENT));
+        lv_style_set_text_color(&s_op_btn_foc,   lv_color_white());
+    }
     lv_style_set_bg_color(&s_main_small_def, ui_color(UI_C_DANGER));
     lv_style_set_bg_color(&s_main_small_foc, ui_color(UI_C_DANGER_FOCUS));
     lv_style_set_bg_color(&s_op_btn_def,     ui_color(UI_C_NEUTRAL));
-    lv_style_set_bg_color(&s_op_btn_foc,     ui_color(UI_C_PRIMARY));  // 聚焦黄底 (参考图签名式选中态)
     // 列表条目里的 name/desc 标签不自带文字色，会继承按钮的文字色。LVGL 主题给每个按钮
     // 都叠了 bg_color_primary(primary 底 + 白字)，白字在浅色方案的浅灰中性底上几乎看不清。
     // 用 LVGL 主题标题/正文同款 color_text 覆盖 —— 与顶部 "干员列表" 标题完全一致
-    // (深色: 亮浅灰 / 浅色: 深灰)，两套方案都可读。聚焦态底是 accent 高亮，保持白字。
+    // (深色: 亮浅灰 / 浅色: 深灰)，两套方案都可读。
     lv_color_t list_text = ui_theme_is_dark() ? lv_palette_lighten(LV_PALETTE_GREY, 5)
                                               : lv_palette_darken(LV_PALETTE_GREY, 4);
     lv_style_set_text_color(&s_op_btn_def, list_text);
-    // 聚焦底是 accent 高亮：白底主题里 accent=黑，ON_ACCENT(黑) 会黑底黑字，
-    // 统一白字 (各主题 accent 均为中亮色，白字可读)。
-    lv_style_set_text_color(&s_op_btn_foc, ui_color(UI_C_ON_ACCENT)); // 黄底黑字
 
     lv_style_set_bg_color(&s_flag_sd,     ui_color(UI_C_INFO));
     lv_style_set_bg_color(&s_flag_run,    ui_color(UI_C_SUCCESS));
@@ -248,11 +237,46 @@ void styles_apply_palette(void)
     lv_style_set_bg_color(&s_sw_ind_chk,   ui_color(UI_C_PRIMARY));
     lv_style_set_bg_color(&s_sw_knob,      lv_color_white());
     lv_style_set_bg_color(&s_sw_knob_chk,  lv_color_white());
+
+    // ---- 终末地专属结构: 按钮投影/悬浮 + 开关旋钮投影, 仅终末地启用 ----
+    if (ui_theme_is_endfield()) {
+        lv_style_set_shadow_color(&s_main_btn_def, lv_color_black());
+        lv_style_set_shadow_width(&s_main_btn_def, S(4));
+        lv_style_set_shadow_opa(&s_main_btn_def, LV_OPA_20);
+        lv_style_set_shadow_offset_y(&s_main_btn_def, S(2));
+        lv_style_set_shadow_color(&s_main_btn_foc, lv_color_black());
+        lv_style_set_shadow_width(&s_main_btn_foc, S(18));
+        lv_style_set_shadow_opa(&s_main_btn_foc, LV_OPA_40);
+        lv_style_set_shadow_offset_y(&s_main_btn_foc, S(8));
+        lv_style_set_translate_y(&s_main_btn_foc, S(-4));
+        lv_style_set_shadow_color(&s_focus_float, lv_color_black());
+        lv_style_set_shadow_width(&s_focus_float, S(18));
+        lv_style_set_shadow_opa(&s_focus_float, LV_OPA_40);
+        lv_style_set_shadow_offset_y(&s_focus_float, S(8));
+        lv_style_set_translate_y(&s_focus_float, S(-4));
+        lv_style_set_shadow_color(&s_sw_knob, lv_color_black());
+        lv_style_set_shadow_width(&s_sw_knob, S(3));
+        lv_style_set_shadow_opa(&s_sw_knob, LV_OPA_30);
+        lv_style_set_shadow_offset_y(&s_sw_knob, S(1));
+    } else {
+        lv_style_set_shadow_width(&s_main_btn_def, 0);
+        lv_style_set_shadow_opa(&s_main_btn_def, LV_OPA_TRANSP);
+        lv_style_set_shadow_width(&s_main_btn_foc, 0);
+        lv_style_set_shadow_opa(&s_main_btn_foc, LV_OPA_TRANSP);
+        lv_style_set_translate_y(&s_main_btn_foc, 0);
+        lv_style_set_shadow_width(&s_focus_float, 0);
+        lv_style_set_shadow_opa(&s_focus_float, LV_OPA_TRANSP);
+        lv_style_set_translate_y(&s_focus_float, 0);
+        lv_style_set_shadow_width(&s_sw_knob, 0);
+        lv_style_set_shadow_opa(&s_sw_knob, LV_OPA_TRANSP);
+    }
 }
 
-// 屏蔽 LVGL 主题默认的按钮焦点外框(黄色)，按钮选中只用悬浮效果
+// 屏蔽 LVGL 主题默认的按钮焦点外框(黄色)，按钮选中只用悬浮效果(终末地专属)。
+// 其他主题没有悬浮效果，保留 LVGL 默认焦点外框作选中指示。
 static void btn_disable_theme_focus(lv_obj_t *obj)
 {
+    if (!ui_theme_is_endfield()) return;
     lv_obj_set_style_outline_width(obj, 0, LV_PART_MAIN | LV_STATE_FOCUSED);
     lv_obj_set_style_outline_width(obj, 0, LV_PART_MAIN | LV_STATE_FOCUS_KEY);
     lv_obj_set_style_outline_opa(obj, LV_OPA_TRANSP, LV_PART_MAIN | LV_STATE_FOCUSED);
@@ -351,9 +375,9 @@ void add_style_focus(lv_obj_t *obj)
 {
     styles_ensure();
     lv_obj_remove_style(obj, &s_focus, LV_PART_MAIN | LV_STATE_FOCUS_KEY);
-    // 按钮用悬浮效果表示选中(见 s_focus_float)，不加外框；
-    // 非按钮控件(滑条/开关/下拉/弧形)保留外框确认。
-    if (lv_obj_check_type(obj, &lv_button_class)) return;
+    // 终末地: 按钮用悬浮效果表示选中(见 s_focus_float)，不加外框；
+    // 其他主题: 按钮也挂外框确认。非按钮控件(滑条/开关/下拉/弧形)一律保留外框。
+    if (ui_theme_is_endfield() && lv_obj_check_type(obj, &lv_button_class)) return;
     lv_obj_add_style(obj, &s_focus, LV_PART_MAIN | LV_STATE_FOCUS_KEY);
 }
 
@@ -363,10 +387,12 @@ void add_style_screen_bg(lv_obj_t *obj)
     lv_obj_add_style(obj, &s_screen_bg, LV_PART_MAIN | LV_STATE_DEFAULT);
 }
 
-// 开关 -> 黄色 pill (参考游戏 UI): 轨道浅灰圆角, 开启指示器黄, 旋钮白带投影
+// 开关 -> 黄色 pill (参考游戏 UI): 轨道浅灰圆角, 开启指示器黄, 旋钮白带投影。
+// 终末地专属; 其他主题用 LVGL 默认开关样式。
 void add_style_switch(lv_obj_t *obj)
 {
     styles_ensure();
+    if (!ui_theme_is_endfield()) return;
     lv_obj_add_style(obj, &s_sw_track,    LV_PART_MAIN | LV_STATE_DEFAULT);
     lv_obj_add_style(obj, &s_sw_track_chk, LV_PART_MAIN | LV_STATE_CHECKED);
     lv_obj_add_style(obj, &s_sw_ind_chk,   LV_PART_INDICATOR | LV_STATE_CHECKED);

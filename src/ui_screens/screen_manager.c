@@ -1,4 +1,5 @@
 #include "screen_manager.h"
+#include "ui/ui_theme.h"
 #include "ui_plane.h"
 #include "config.h"
 #include "ui_metrics.h"
@@ -95,6 +96,8 @@ static void register_screens(void)
 // 瞬切内容，不做 LVGL 软件过渡。过渡观感交给硬件图层 Y 滑动(ui_plane_move)：
 // UI 是单 buffer 直绘，LVGL 的 fade/move 动画会连续多帧全屏重绘，撞上 DEBE 扫描
 // 会持续撕裂；DEBE 图层滑动只挪坐标不重绘 FB，才是无撕裂的过渡。
+static void refresh_after_reload(lv_timer_t *t);
+
 static void load_now(screen_id_t id)
 {
     screen_entry_t *screen = &s_screens[id];
@@ -113,6 +116,10 @@ static void load_now(screen_id_t id)
         screen->obj = fresh;
         screen->rebuild_pending = false;
         lv_screen_load(fresh);
+        // transform(translate 上移)在切屏动画的瞬时状态里不重算, 交互后才恢复;
+        // 延迟一帧强制刷新样式可避开该状态, 让悬浮效果立即生效。
+        lv_timer_t *refr_t = lv_timer_create((lv_timer_cb_t)refresh_after_reload, 16, fresh);
+        lv_timer_set_repeat_count(refr_t, 1);
 
         // 新屏成为 active 后再删旧屏；旧屏可能仍是切屏前实际显示的页面。
         lv_obj_delete(old);
@@ -320,6 +327,38 @@ void screens_rebuild(screen_id_t id)
     // 这里只标脏。screen_show 会先把 UI 平面下潜到幕帘位置，swap_cb 真正加载
     // 该屏时才重建，避免刷新完成通知删除仍处于 active 状态的干员页。
     s_screens[id].rebuild_pending = true;
+}
+
+static void refresh_after_reload(lv_timer_t *t)
+{
+    lv_obj_t *scr = (lv_obj_t *)lv_timer_get_user_data(t);
+    if (!scr) return;
+    lv_obj_report_style_change(NULL);
+    lv_obj_refresh_style(scr, LV_PART_ANY, LV_STYLE_PROP_ANY);
+    lv_obj_update_layout(scr);
+}
+
+static void reload_current_cb(lv_timer_t *t)
+{
+    (void)t;
+    screen_entry_t *screen = &s_screens[s_current];
+    if (!screen->obj) return;
+    lv_obj_t *old = screen->obj;
+    lv_obj_t *fresh = screen->create();
+    if (!fresh) {
+        log_error("reload current screen %d failed", (int)s_current);
+        return;
+    }
+    screen->obj = fresh;
+    lv_screen_load(fresh); // 触发 SCREEN_LOAD_START -> 各屏重挂导航 group
+    lv_obj_delete(old);
+}
+
+void screens_reload_current(void)
+{
+    // 延迟到下一 tick: 在 dropdown 事件回调里销毁当前屏不安全。
+    lv_timer_t *t = lv_timer_create(reload_current_cb, 1, NULL);
+    lv_timer_set_repeat_count(t, 1);
 }
 
 // ============ 按键导航状态机 (原 scr_transition.c::screen_key_event_cb) ============

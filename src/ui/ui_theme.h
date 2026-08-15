@@ -41,6 +41,7 @@ int         ui_theme_count(void);
 const char *ui_theme_name(int id);
 int         ui_theme_current(void);
 bool        ui_theme_is_dark(void);   // 当前方案是否深色底
+bool        ui_theme_is_endfield(void); // 当前方案是否终末地(专属页头/背景/控件结构)
 
 // 切方案总入口：换色板 -> 重设 LVGL 默认主题(含中文字体) -> 重着色共享 style ->
 // report_style_change。依赖 font_registry，须在 font_registry_init() 之后调用。

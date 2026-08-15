@@ -11,11 +11,14 @@ extern "C" {
 #endif
 
 // 图片目录(含 lv_fs 盘符)。sim 用 -DUI_IMG_DIR 注入仓库 font/；设备侧不定义此宏，
-// logo 路径运行时按可执行文件同级 res/ 解析 (见 screen_common.c)。PRTS logo 按 720(2x) 出图。
+// logo 路径运行时按可执行文件同级 res/ 解析 (见 screen_common.c)。
+// prts_64_inv.png = 默认 PRTS logo(其他主题); Endfield_64_inv.png = 终末地主题专用。
 #ifdef UI_IMG_DIR
-#define LOGO_PRTS_PATH UI_IMG_DIR "/prts_64_inv.png"
+#define LOGO_PRTS_PATH   UI_IMG_DIR "/prts_64_inv.png"
+#define LOGO_ENDFIELD_PATH UI_IMG_DIR "/Endfield_64_inv.png"
 #endif
-#define LOGO_PRTS_FILE "prts_64_inv.png"
+#define LOGO_PRTS_FILE   "prts_64_inv.png"
+#define LOGO_ENDFIELD_FILE "Endfield_64_inv.png"
 #ifdef UI_IMG_DIR
 #define BG_CONTOUR_PATH UI_IMG_DIR "/bg_contour.png"
 #endif

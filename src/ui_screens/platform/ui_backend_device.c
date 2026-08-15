@@ -5,6 +5,7 @@
 //
 #include "ui_screens/ui_backend.h"
 #include "ui_screens/ui_services.h"
+#include "ui_screens/screen_manager.h"
 #include "ui/ui_theme.h"
 
 #include <lvgl/lvgl.h>   // LV_KEY_*
@@ -218,6 +219,12 @@ void ui_backend_theme_set(int id)
     settings_unlock(&g_settings);
     settings_update(&g_settings);
     ui_theme_apply(id);
+    // 结构性 UI (页头横带/渐变/等高线/亮度条轨道) 在屏创建时按主题渲染：
+    // 已缓存的屏全部标脏(下次加载时重建)，当前屏立即重建。
+    for (int i = 0; i < SCREEN_COUNT; i++) {
+        screens_rebuild((screen_id_t)i);
+    }
+    screens_reload_current();
 }
 
 // ================= 存储 / sysinfo (原 actions_sysinfo.c) =================

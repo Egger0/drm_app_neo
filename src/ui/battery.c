@@ -171,6 +171,13 @@ void ui_battery_init(){
     lv_obj_set_style_text_align(g_battery_obj, LV_TEXT_ALIGN_RIGHT, LV_PART_MAIN);
 
 }
+void ui_battery_apply_theme(void)
+{
+    if (!g_battery_obj) return;
+    lv_obj_set_style_text_color(g_battery_obj, ui_color(UI_C_ON_ACCENT), LV_PART_MAIN);
+    lv_obj_invalidate(g_battery_obj);
+}
+
 void ui_battery_destroy(){
     lv_timer_delete(g_battery_timer);
     if (atomic_load(&g_sample_run)) {

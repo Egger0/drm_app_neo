@@ -45,6 +45,9 @@ lv_group_t *screens_group(void);
 // 标记某屏缓存过期；下次实际加载该屏时安全重建，读到最新后端数据。
 void screens_rebuild(screen_id_t id);
 
+// 立即重建当前屏(下一 tick 执行)。切主题时结构性 UI 跟着换。
+void screens_reload_current(void);
+
 // 编码器/按键导航状态机 (原 scr_transition.c 的 screen_key_event_cb)。
 // 设备侧把硬件按键喂进来即可；sim 当前不驱动它 (维持鼠标点按 + group)。
 void screens_handle_key(uint32_t key);

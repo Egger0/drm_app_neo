@@ -1,6 +1,7 @@
 #include "ui_theme.h"
 #include "font_registry.h"
 #include "ui_screens/styles.h"
+#include "battery.h"
 
 // 配色方案：name 作设置屏下拉项，dark 决定 LVGL 基础主题(卡片/文字/滚动条)深浅，
 // pal 是本方案的语义色表 (0xRRGGBB)。强调色 primary/warning/danger/success 一律选
@@ -8,6 +9,7 @@
 typedef struct {
     const char *name;
     bool        dark;
+    bool        endfield;   // 终末地专属 UI 结构(页头横带/渐变/等高线/固定轨道等)
     uint32_t    pal[UI_C_COUNT];
 } ui_theme_preset_t;
 
@@ -69,7 +71,7 @@ static const ui_theme_preset_t s_presets[] = {
     /* 终末地(白底四色版): 只保留黑/灰/黄/白, 白色做背景, 黑灰做层次,
      * 金黄 #e8c600 做唯一强调(按钮/角标/焦点), 危险/黑底配白字。
      * 对应官网浅色区 #f0f0f0/#e5e5e5 灰阶 + #191919 深字 + 黄点缀。 */
-    { .name = "终末地", .dark = false, .pal = {
+    { .name = "终末地", .dark = false, .endfield = true, .pal = {
         [UI_C_PRIMARY]=0xe8c600, [UI_C_PRIMARY_FOCUS]=0xd2ad00,
         [UI_C_WARNING]=0xe8c600,
         [UI_C_DANGER]=0x1a1a1a,  [UI_C_DANGER_FOCUS]=0x3a3a3a,
@@ -86,6 +88,7 @@ int         ui_theme_count(void)   { return UI_THEME_COUNT; }
 const char *ui_theme_name(int id)  { return (id >= 0 && id < UI_THEME_COUNT) ? s_presets[id].name : ""; }
 int         ui_theme_current(void) { return g_id; }
 bool        ui_theme_is_dark(void) { return s_presets[g_id].dark; }
+bool        ui_theme_is_endfield(void) { return s_presets[g_id].endfield; }
 
 lv_color_t ui_color(ui_color_role_t r)
 {
@@ -110,4 +113,5 @@ void ui_theme_apply(int id)
 
     styles_apply_palette();          // 共享 style 按新表重着色
     lv_obj_report_style_change(NULL); // 刷新全场
+    ui_battery_apply_theme();        // 电池在系统层, report_style_change 不覆盖, 显式重设
 }
